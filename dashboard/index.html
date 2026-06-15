@@ -10,8 +10,8 @@
 body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
 .topbar{display:flex;align-items:center;padding:14px 28px;border-bottom:1px solid rgba(255,255,255,.08);gap:20px;}
 .logo-img{width:44px;height:44px;object-fit:contain;border-radius:6px;flex-shrink:0;}
-.title-block h1{font-size:16px;font-weight:600;letter-spacing:.01em;}
-.nav-main{display:flex;gap:4px;padding:0 28px;border-bottom:1px solid rgba(255,255,255,.06);background:#000;}
+.title-block h1{font-size:16px;font-weight:600;}
+.nav-main{display:flex;gap:4px;padding:0 28px;border-bottom:1px solid rgba(255,255,255,.06);}
 .nav-btn{padding:12px 20px;font-size:13px;font-weight:500;font-family:Inter,sans-serif;color:rgba(255,255,255,.45);background:transparent;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:all .15s;}
 .nav-btn:hover{color:rgba(255,255,255,.8);}
 .nav-btn.active{color:#fff;border-bottom-color:#2a6fc4;}
@@ -23,6 +23,7 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
 .page{display:none;padding:24px 28px;}
 .page.active{display:block;}
 .placeholder{display:flex;align-items:center;justify-content:center;height:300px;color:rgba(255,255,255,.15);font-size:14px;border:1px dashed rgba(255,255,255,.08);border-radius:12px;}
+.week-label{font-size:11px;color:rgba(255,255,255,.2);margin-bottom:20px;}
 .kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
 .kpi{background:#0d0d0d;border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:18px;}
 .kpi-label{font-size:10px;font-weight:500;color:rgba(255,255,255,.38);text-transform:uppercase;letter-spacing:.09em;margin-bottom:12px;}
@@ -32,6 +33,7 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
 .pct-fill{height:100%;border-radius:2px;}
 .sec-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.28);margin-bottom:14px;}
 .editors-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
+.editors-grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:24px;max-width:720px;}
 .ecard{background:#0d0d0d;border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:16px;}
 .ehead{display:flex;align-items:center;gap:11px;margin-bottom:12px;}
 .eavatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
@@ -47,7 +49,13 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
 .ebar-fill{height:100%;border-radius:2px;}
 .chart-section{background:#0d0d0d;border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:20px;}
 .chart-wrap{position:relative;height:200px;}
-.week-label{font-size:11px;color:rgba(255,255,255,.2);margin-bottom:20px;}
+.vsl-items{display:flex;flex-direction:column;gap:7px;margin-bottom:4px;}
+.vsl-item{display:flex;align-items:center;gap:8px;}
+.vsl-tipo{font-size:11px;color:rgba(255,255,255,.5);flex:1;}
+.vsl-qtd{font-size:13px;font-weight:600;color:#fff;width:20px;text-align:center;}
+.vsl-status{font-size:10px;font-weight:500;padding:2px 8px;border-radius:20px;}
+.vsl-status.pendente{background:rgba(102,102,102,.2);color:#888;}
+.vsl-status.concluido{background:rgba(29,158,117,.15);color:#1D9E75;}
 </style>
 </head>
 <body>
@@ -69,6 +77,7 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
   <button class="nav-sub-btn" onclick="selectSub('vsl',this)">VSL</button>
 </div>
 
+<!-- ADS -->
 <div class="page active" id="page-ads">
   <div class="week-label">Semana atual &middot; Junho 2026</div>
   <div class="kpi-row">
@@ -88,115 +97,109 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
       <div class="pct-track"><div class="pct-fill" style="width:89%;background:#1D9E75;"></div></div>
     </div>
   </div>
-
   <div class="sec-label">Performance por Editor</div>
-  <div class="editors-grid">
-    <div class="ecard">
-      <div class="ehead">
-        <div class="eavatar" style="background:#e74c3c;color:#fff;">VI</div>
-        <div><div class="ename">Vitu</div><div class="erole">Editor</div></div>
-      </div>
+  <div class="editors-grid"><div class="ecard">
+      <div class="ehead"><div class="eavatar" style="background:#e74c3c;color:#fff;">VI</div>
+        <div><div class="ename">Vitu</div><div class="erole">Editor</div></div></div>
       <div class="estats">
-        <div>
-          <div class="eads-label">Ads entregues</div>
-          <div class="evideos">8</div>
-          <div class="evideos-sub">de 8 planejados</div>
-        </div>
-        <div>
-          <div class="epct-val" style="color:#1D9E75;">100%</div>
-          <div class="epct-sub">cumprimento</div>
-        </div>
+        <div><div class="eads-label">Ads entregues</div><div class="evideos">8</div>
+          <div class="evideos-sub">de 8 planejados</div></div>
+        <div><div class="epct-val" style="color:#1D9E75;">100%</div><div class="epct-sub">cumprimento</div></div>
       </div>
       <div class="ebar-track"><div class="ebar-fill" style="width:100%;background:#1D9E75;"></div></div>
-    </div>
-    <div class="ecard">
-      <div class="ehead">
-        <div class="eavatar" style="background:#2a6fc4;color:#fff;">GT</div>
-        <div><div class="ename">Gustavo T.</div><div class="erole">Editor</div></div>
-      </div>
+    </div><div class="ecard">
+      <div class="ehead"><div class="eavatar" style="background:#2a6fc4;color:#fff;">GT</div>
+        <div><div class="ename">Gustavo T.</div><div class="erole">Editor</div></div></div>
       <div class="estats">
-        <div>
-          <div class="eads-label">Ads entregues</div>
-          <div class="evideos">15</div>
-          <div class="evideos-sub">de 17 planejados</div>
-        </div>
-        <div>
-          <div class="epct-val" style="color:#1D9E75;">88%</div>
-          <div class="epct-sub">cumprimento</div>
-        </div>
+        <div><div class="eads-label">Ads entregues</div><div class="evideos">15</div>
+          <div class="evideos-sub">de 17 planejados</div></div>
+        <div><div class="epct-val" style="color:#1D9E75;">88%</div><div class="epct-sub">cumprimento</div></div>
       </div>
       <div class="ebar-track"><div class="ebar-fill" style="width:88%;background:#1D9E75;"></div></div>
-    </div>
-    <div class="ecard">
-      <div class="ehead">
-        <div class="eavatar" style="background:#c9a84c;color:#000;">MA</div>
-        <div><div class="ename">Malcom</div><div class="erole">Editor</div></div>
-      </div>
+    </div><div class="ecard">
+      <div class="ehead"><div class="eavatar" style="background:#c9a84c;color:#000;">MA</div>
+        <div><div class="ename">Malcom</div><div class="erole">Editor</div></div></div>
       <div class="estats">
-        <div>
-          <div class="eads-label">Ads entregues</div>
-          <div class="evideos">13</div>
-          <div class="evideos-sub">de 18 planejados</div>
-        </div>
-        <div>
-          <div class="epct-val" style="color:#c9a84c;">72%</div>
-          <div class="epct-sub">cumprimento</div>
-        </div>
+        <div><div class="eads-label">Ads entregues</div><div class="evideos">13</div>
+          <div class="evideos-sub">de 18 planejados</div></div>
+        <div><div class="epct-val" style="color:#c9a84c;">72%</div><div class="epct-sub">cumprimento</div></div>
       </div>
       <div class="ebar-track"><div class="ebar-fill" style="width:72%;background:#c9a84c;"></div></div>
-    </div>
-    <div class="ecard">
-      <div class="ehead">
-        <div class="eavatar" style="background:#9b59b6;color:#fff;">VR</div>
-        <div><div class="ename">Victor Ravi</div><div class="erole">Editor</div></div>
-      </div>
+    </div><div class="ecard">
+      <div class="ehead"><div class="eavatar" style="background:#9b59b6;color:#fff;">VR</div>
+        <div><div class="ename">Victor Ravi</div><div class="erole">Editor</div></div></div>
       <div class="estats">
-        <div>
-          <div class="eads-label">Ads entregues</div>
-          <div class="evideos">10</div>
-          <div class="evideos-sub">de 10 planejados</div>
-        </div>
-        <div>
-          <div class="epct-val" style="color:#1D9E75;">100%</div>
-          <div class="epct-sub">cumprimento</div>
-        </div>
+        <div><div class="eads-label">Ads entregues</div><div class="evideos">10</div>
+          <div class="evideos-sub">de 10 planejados</div></div>
+        <div><div class="epct-val" style="color:#1D9E75;">100%</div><div class="epct-sub">cumprimento</div></div>
       </div>
       <div class="ebar-track"><div class="ebar-fill" style="width:100%;background:#1D9E75;"></div></div>
-    </div>
-    <div class="ecard">
-      <div class="ehead">
-        <div class="eavatar" style="background:#2a6fc4;color:#fff;">LU</div>
-        <div><div class="ename">Luan</div><div class="erole">Editor</div></div>
-      </div>
+    </div><div class="ecard">
+      <div class="ehead"><div class="eavatar" style="background:#2a6fc4;color:#fff;">LU</div>
+        <div><div class="ename">Luan</div><div class="erole">Editor</div></div></div>
       <div class="estats">
-        <div>
-          <div class="eads-label">Ads entregues</div>
-          <div class="evideos">12</div>
-          <div class="evideos-sub">de 12 planejados</div>
-        </div>
-        <div>
-          <div class="epct-val" style="color:#1D9E75;">100%</div>
-          <div class="epct-sub">cumprimento</div>
-        </div>
+        <div><div class="eads-label">Ads entregues</div><div class="evideos">12</div>
+          <div class="evideos-sub">de 12 planejados</div></div>
+        <div><div class="epct-val" style="color:#1D9E75;">100%</div><div class="epct-sub">cumprimento</div></div>
       </div>
       <div class="ebar-track"><div class="ebar-fill" style="width:100%;background:#1D9E75;"></div></div>
     </div></div>
-
   <div class="chart-section">
     <div class="sec-label" style="margin-bottom:16px;">Ads entregues por editor</div>
     <div class="chart-wrap"><canvas id="barChart"></canvas></div>
   </div>
 </div>
 
+<!-- VSL -->
 <div class="page" id="page-vsl">
-  <div class="placeholder">Em breve &middot; VSL</div>
+  <div class="week-label">Semana atual &middot; Junho 2026</div>
+  <div class="sec-label">Performance por Editor</div>
+  <div class="editors-grid-2"><div class="ecard">
+      <div class="ehead"><div class="eavatar" style="background:#9b59b6;color:#fff;">VI</div>
+        <div><div class="ename">Victor</div><div class="erole">Editor VSL</div></div></div>
+      <div class="vsl-items"><div class="vsl-item">
+          <span class="vsl-tipo">Lead</span>
+          <span class="vsl-qtd">2</span>
+          <span class="vsl-status pendente">Pendente</span>
+        </div></div>
+      <div class="estats" style="margin-top:12px;">
+        <div><div class="eads-label">Total entregues</div><div class="evideos">0</div>
+          <div class="evideos-sub">de 2 planejados</div></div>
+        <div><div class="epct-val" style="color:#e74c3c;">0%</div><div class="epct-sub">cumprimento</div></div>
+      </div>
+      <div class="ebar-track"><div class="ebar-fill" style="width:0%;background:#e74c3c;"></div></div>
+    </div><div class="ecard">
+      <div class="ehead"><div class="eavatar" style="background:#2a6fc4;color:#fff;">TH</div>
+        <div><div class="ename">Thiago</div><div class="erole">Editor VSL</div></div></div>
+      <div class="vsl-items"><div class="vsl-item">
+          <span class="vsl-tipo">Microlead</span>
+          <span class="vsl-qtd">1</span>
+          <span class="vsl-status pendente">Pendente</span>
+        </div><div class="vsl-item">
+          <span class="vsl-tipo">Lead</span>
+          <span class="vsl-qtd">3</span>
+          <span class="vsl-status pendente">Pendente</span>
+        </div></div>
+      <div class="estats" style="margin-top:12px;">
+        <div><div class="eads-label">Total entregues</div><div class="evideos">0</div>
+          <div class="evideos-sub">de 4 planejados</div></div>
+        <div><div class="epct-val" style="color:#e74c3c;">0%</div><div class="epct-sub">cumprimento</div></div>
+      </div>
+      <div class="ebar-track"><div class="ebar-fill" style="width:0%;background:#e74c3c;"></div></div>
+    </div></div>
 </div>
+
+<!-- COPY -->
 <div class="page" id="page-copy">
   <div class="placeholder">Em breve &middot; Copy</div>
 </div>
+
+<!-- ESTRATÉGICO -->
 <div class="page" id="page-estrategico">
   <div class="placeholder">Em breve &middot; Estrat&eacute;gico</div>
 </div>
+
+<!-- CS -->
 <div class="page" id="page-cs">
   <div class="placeholder">Em breve &middot; CS</div>
 </div>
@@ -238,8 +241,7 @@ new Chart(document.getElementById('barChart').getContext('2d'), {
       label: 'Entregues',
       data: [8, 15, 13, 10, 12],
       backgroundColor: ['#e74c3ccc', '#2a6fc4cc', '#c9a84ccc', '#9b59b6cc', '#2a6fc4cc'],
-      borderRadius: 6,
-      borderSkipped: false
+      borderRadius: 6, borderSkipped: false
     }]
   },
   options: {
