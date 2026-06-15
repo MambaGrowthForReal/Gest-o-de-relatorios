@@ -75,23 +75,23 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
 
 <div class="body">
   <div id="errorMsg" class="error-box" style="display:none;"></div>
-  <div id="loadingMsg" class="loading">&#9881; Carregando dados do Supabase...</div>
+  <div id="loadingMsg" class="loading">&#9881; Carregando dados...</div>
 
   <div id="mainContent" style="display:none;">
     <div class="kpi-row">
       <div class="kpi">
         <div class="kpi-label">Tasks no per&iacute;odo</div>
-        <div class="kpi-value" id="kpiTotal">—</div>
+        <div class="kpi-value" id="kpiTotal">-</div>
         <div class="kpi-sub">Novos criativos</div>
       </div>
       <div class="kpi">
         <div class="kpi-label">Conclui&#769;das</div>
-        <div class="kpi-value" id="kpiDone">—</div>
+        <div class="kpi-value" id="kpiDone">-</div>
         <div class="kpi-sub">status CONCLUI&#769;DO</div>
       </div>
       <div class="kpi">
         <div class="kpi-label">Cumprimento Geral</div>
-        <div class="kpi-value" id="kpiPct" style="color:#c9a84c;">—</div>
+        <div class="kpi-value" id="kpiPct" style="color:#c9a84c;">-</div>
         <div class="pct-track"><div class="pct-fill" id="mainBar" style="width:0%;background:#c9a84c;"></div></div>
       </div>
       <div class="kpi">
@@ -117,30 +117,30 @@ const SUPABASE_URL = "https://wlfrmnpntpnbjekwnvcs.supabase.co";
 const SUPABASE_KEY = "sb_publishable_CGieCLKqBEzElgBH9Y8QLg_UWKkLom-";
 
 const EDITORS = [
-  { key: "luan",             label: "Luan",        initials: "LU", color: "#2a6fc4" },
-  { key: "malcom",           label: "Malcom",       initials: "MA", color: "#c9a84c" },
-  { key: "gustavo teixeira", label: "Gustavo T.",   initials: "GT", color: "#2a6fc4" },
-  { key: "victor ravi",      label: "Victor Ravi",  initials: "VR", color: "#9b59b6" },
-  { key: "vitu",             label: "Vitu",         initials: "VI", color: "#e74c3c" },
-  { key: "thiago",           label: "Thiago",       initials: "TH", color: "#2a6fc4" },
+  { key: "luan",             label: "Luan",       initials: "LU", color: "#2a6fc4" },
+  { key: "malcom",           label: "Malcom",      initials: "MA", color: "#c9a84c" },
+  { key: "gustavo teixeira", label: "Gustavo T.",  initials: "GT", color: "#2a6fc4" },
+  { key: "victor ravi",      label: "Victor Ravi", initials: "VR", color: "#9b59b6" },
+  { key: "vitu",             label: "Vitu",        initials: "VI", color: "#e74c3c" },
+  { key: "thiago",           label: "Thiago",      initials: "TH", color: "#2a6fc4" },
 ];
 
 const STATUS_COLORS = {
-  "concluido":              "#1D9E75",
-  "em edicao":              "#378ADD",
-  "verificacao final":      "#D4537E",
-  "nao iniciado":           "#666",
-  "em verificacao do video":"#e67e22",
-  "producao textual":       "#f39c12",
-  "revisao textual":        "#e2b96f",
-  "backlog":                "#8e44ad",
+  "concluido":               "#1D9E75",
+  "em edicao":               "#378ADD",
+  "verificacao final":       "#D4537E",
+  "nao iniciado":            "#666",
+  "em verificacao do video": "#e67e22",
+  "producao textual":        "#f39c12",
+  "revisao textual":         "#e2b96f",
+  "backlog":                 "#8e44ad",
 };
 
 let chartInstance = null;
 
 function normalize(s) {
   return (s||"").toLowerCase()
-    .normalize("NFD").replace(/[̀-ͯ]/g,"")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
     .replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
 }
 
@@ -154,10 +154,12 @@ function initDates() {
 }
 
 async function fetchTasks(start, end) {
-  const startMs = new Date(start+'T00:00:00').getTime();
-  const endMs   = new Date(end  +'T23:59:59').getTime();
+  // Converter datas para timestamp em ms (bigint no Supabase)
+  const startMs = new Date(start + 'T00:00:00').getTime();
+  const endMs   = new Date(end   + 'T23:59:59').getTime();
 
-  let url = SUPABASE_URL + "/rest/v1/tasks"
+  // due_date no Supabase está salvo como bigint (ms desde epoch)
+  const url = SUPABASE_URL + "/rest/v1/tasks"
     + "?list_name=ilike.*novos criativos*"
     + "&select=id,name,status,assignees,due_date,date_updated"
     + "&due_date=gte." + startMs
@@ -168,7 +170,24 @@ async function fetchTasks(start, end) {
     headers: {
       "apikey": SUPABASE_KEY,
       "Authorization": "Bearer " + SUPABASE_KEY,
-      "Content-Type": "application/json"
+    }
+  });
+
+  if (!res.ok) throw new Error("HTTP " + res.status + ": " + await res.text());
+  return res.json();
+}
+
+async function fetchAllTasks() {
+  // Busca sem filtro de data para ver o que existe
+  const url = SUPABASE_URL + "/rest/v1/tasks"
+    + "?list_name=ilike.*novos criativos*"
+    + "&select=id,name,status,assignees,due_date,date_updated"
+    + "&limit=2000";
+
+  const res = await fetch(url, {
+    headers: {
+      "apikey": SUPABASE_KEY,
+      "Authorization": "Bearer " + SUPABASE_KEY,
     }
   });
 
@@ -179,11 +198,10 @@ async function fetchTasks(start, end) {
 function getEditorKey(assignees) {
   if (!Array.isArray(assignees)) return null;
   for (const a of assignees) {
-    const raw = (a.username || a.email || a.name || "").toLowerCase();
-    const name = normalize(raw.split("@")[0].replace(/[._]/g," "));
+    const raw = normalize((a.username || a.email || a.name || "").split("@")[0].replace(/[._]/g," "));
     for (const ed of EDITORS) {
       const parts = ed.key.split(" ");
-      if (parts.every(p => name.includes(p))) return ed.key;
+      if (parts.every(p => raw.includes(p))) return ed.key;
     }
   }
   return null;
@@ -195,7 +213,7 @@ function pctColor(p) {
   return "#e74c3c";
 }
 
-function renderDash(tasks) {
+function renderDash(tasks, label) {
   const total = tasks.length;
   const done  = tasks.filter(t => normalize(t.status||"").includes("conclu")).length;
   const pct   = total > 0 ? Math.round(done/total*100) : 0;
@@ -205,7 +223,6 @@ function renderDash(tasks) {
   document.getElementById('kpiPct').textContent   = pct + "%";
   document.getElementById('mainBar').style.width  = pct + "%";
 
-  // Status breakdown
   const sc = {};
   tasks.forEach(t => {
     const s = normalize(t.status||"sem status");
@@ -215,12 +232,11 @@ function renderDash(tasks) {
     .sort((a,b)=>b[1]-a[1]).slice(0,5)
     .map(([s,c]) => {
       const col = STATUS_COLORS[s] || "#888";
-      const lbl = (t => t.charAt(0).toUpperCase()+t.slice(1))(s);
+      const lbl = s.charAt(0).toUpperCase()+s.slice(1);
       return '<div class="status-row"><div class="sdot" style="background:'+col+';"></div>'
         +'<span class="slabel">'+lbl+'</span><span class="scount">'+c+'</span></div>';
     }).join('');
 
-  // Por editor
   const es = {};
   EDITORS.forEach(e => es[e.key] = {total:0, done:0});
   tasks.forEach(t => {
@@ -251,14 +267,13 @@ function renderDash(tasks) {
       +'</div>';
   }).join('');
 
-  // Chart
   if (chartInstance) chartInstance.destroy();
   chartInstance = new Chart(document.getElementById('barChart').getContext('2d'), {
     type: 'bar',
     data: {
       labels: EDITORS.map(e=>e.label),
       datasets: [{
-        label: 'Concluídas',
+        label: 'Concluidas',
         data: EDITORS.map(e=>es[e.key].done),
         backgroundColor: EDITORS.map(e=>e.color+'cc'),
         borderRadius: 6, borderSkipped: false
@@ -266,13 +281,13 @@ function renderDash(tasks) {
     },
     options: {
       responsive:true, maintainAspectRatio:false,
-      plugins: {
+      plugins:{
         legend:{display:false},
         tooltip:{backgroundColor:"#111",titleColor:"#fff",bodyColor:"#c9a84c",
           borderColor:"rgba(255,255,255,.1)",borderWidth:1,
           callbacks:{label:c=>" "+c.parsed.y+" tasks"}}
       },
-      scales: {
+      scales:{
         x:{grid:{display:false},ticks:{color:"rgba(255,255,255,.45)",font:{size:12,family:"Inter"}},border:{display:false}},
         y:{grid:{color:"rgba(255,255,255,.05)"},ticks:{color:"rgba(255,255,255,.3)",font:{size:11,family:"Inter"}},border:{display:false}}
       }
@@ -280,19 +295,30 @@ function renderDash(tasks) {
   });
 
   const latest = tasks.reduce((m,t)=>Math.max(m,t.date_updated||0),0);
-  if (latest) document.getElementById('syncInfo').textContent =
-    "Última sync ClickUp: " + new Date(latest).toLocaleString('pt-BR');
+  const syncTxt = latest ? "Ultima sync ClickUp: " + new Date(latest).toLocaleString('pt-BR') : "";
+  document.getElementById('syncInfo').textContent = (label ? label + " | " : "") + syncTxt;
 }
 
 async function loadData() {
   const start = document.getElementById('dtStart').value;
   const end   = document.getElementById('dtEnd').value;
+
   document.getElementById('loadingMsg').style.display = 'block';
   document.getElementById('mainContent').style.display = 'none';
   document.getElementById('errorMsg').style.display = 'none';
+
   try {
-    const tasks = await fetchTasks(start, end);
-    renderDash(tasks);
+    // Tenta com filtro de data primeiro
+    let tasks = await fetchTasks(start, end);
+
+    // Se retornar zero, busca tudo (due_date pode estar nulo nas tasks)
+    let label = "";
+    if (tasks.length === 0) {
+      tasks = await fetchAllTasks();
+      label = "Exibindo todas as tasks (due_date nao preenchido no ClickUp)";
+    }
+
+    renderDash(tasks, label);
     document.getElementById('loadingMsg').style.display = 'none';
     document.getElementById('mainContent').style.display = 'block';
   } catch(e) {
