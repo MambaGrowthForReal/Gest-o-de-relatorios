@@ -23,7 +23,7 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
 .page{display:none;padding:24px 28px;}
 .page.active{display:block;}
 .placeholder{display:flex;align-items:center;justify-content:center;height:300px;color:rgba(255,255,255,.15);font-size:14px;border:1px dashed rgba(255,255,255,.08);border-radius:12px;}
-.filters{display:flex;gap:8px;align-items:center;margin-bottom:24px;}
+.filters{display:flex;gap:8px;align-items:center;margin-bottom:0;}
 .filters label{font-size:11px;color:rgba(255,255,255,.4);}
 .filters input[type=date]{background:#0f0f0f;border:1px solid rgba(255,255,255,.1);color:#fff;font-size:12px;padding:7px 10px;border-radius:7px;outline:none;font-family:Inter,sans-serif;}
 .filters input[type=date]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.3;}
@@ -85,15 +85,17 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
   <button class="nav-sub-btn" onclick="selectSub('vsl',this)">VSL</button>
 </div>
 
+<!-- FILTRO GLOBAL -->
+<div class="filters" style="padding:12px 28px;border-bottom:1px solid rgba(255,255,255,.05);margin-bottom:0;">
+  <label>De</label>
+  <input type="date" id="dtStart" value="2026-06-15">
+  <label>At&eacute;</label>
+  <input type="date" id="dtEnd">
+  <button class="btn-apply" onclick="loadAds()">Aplicar</button>
+</div>
+
 <!-- ADS -->
 <div class="page active" id="page-ads">
-  <div class="filters">
-    <label>De</label>
-    <input type="date" id="dtStart" value="2026-06-15">
-    <label>At&eacute;</label>
-    <input type="date" id="dtEnd">
-    <button class="btn-apply" onclick="loadAds()">Aplicar</button>
-  </div>
   <div id="adsError" class="error-box" style="display:none;"></div>
   <div id="adsLoading" class="loading">&#9881; Carregando dados...</div>
   <div id="adsContent" style="display:none;">
