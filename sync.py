@@ -133,6 +133,8 @@ def full_sync():
             for lst in lists:
                 lid, lname = lst["id"], lst["name"]
                 is_novos_criativos = "novos criativos" in lname.lower()
+                if is_novos_criativos:
+                    print(f"  🔍 Processando lista: {lname}")
                 page = 0
                 while True:
                     tasks_raw, last_page = get_tasks_in_list(lid, page)
