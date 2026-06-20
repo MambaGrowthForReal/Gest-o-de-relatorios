@@ -244,7 +244,8 @@ async function loadAds() {
   const start = document.getElementById('dtStart').value;
   const end   = document.getElementById('dtEnd').value;
   const startMs = new Date(start + 'T00:00:00').getTime();
-  const endMs   = end ? new Date(end + 'T23:59:59').getTime() : Date.now();
+  const endDate = end || new Date().toISOString().split('T')[0];
+  const endMs   = new Date(endDate + 'T23:59:59').getTime();
 
   document.getElementById('adsLoading').style.display = 'block';
   document.getElementById('adsContent').style.display = 'none';
@@ -254,8 +255,6 @@ async function loadAds() {
     const url = SUPABASE_URL + "/rest/v1/tasks"
       + "?list_name=ilike.*novos%20criativos*"
       + "&name=ilike.*Criativos*"
-      + "&date_updated=gte." + startMs
-      + "&date_updated=lte." + endMs
       + "&select=id,name,status,assignees,date_updated"
       + "&limit=2000";
 
