@@ -2,7 +2,7 @@ import os
 import time
 import json
 import requests
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 
 # ── Configurações ──────────────────────────────────────────
 CLICKUP_TOKEN = os.getenv("CLICKUP_TOKEN", "pk_206504924_97P74AJM8PTO06YGY0P17EXV366HV81N")
@@ -108,21 +108,16 @@ def upsert_tasks(tasks):
 # ── Sync especial: Novos criativos com due_date individual ─
 
 def sync_novos_criativos():
-    print("  🎯 Sync especial: Novos criativos (due_date individual)")
-    seven_days_ago = datetime.now(tz=timezone.utc) - timedelta(days=7)
-    seven_days_ms  = int(seven_days_ago.timestamp() * 1000)
-
+    print("  🎯 Sync especial: Novos criativos (due_date individual para todas)")
     page = 0
     total = 0
+    recuperados = 0
+
     while True:
         tasks_raw, last_page = get_tasks_in_list(NOVOS_CRIATIVOS_LIST_ID, page)
         parsed = []
-        for t in tasks_raw:
-            # Só processa tasks atualizadas nos últimos 7 dias
-            upd_ms = int(t.get("date_updated", 0) or 0)
-            if upd_ms < seven_days_ms:
-                continue
 
+        for t in tasks_raw:
             p = parse_task(t, "", "Tráfego", NOVOS_CRIATIVOS_LIST_ID, "Novos criativos")
 
             # Se due_date vier null, busca individualmente
@@ -132,10 +127,11 @@ def sync_novos_criativos():
                     ms = detail.get("due_date")
                     if ms:
                         p["due_date"] = datetime.fromtimestamp(int(ms) / 1000, tz=timezone.utc).isoformat()
-                        print(f"  📅 due_date recuperado: {t.get('name', '')[:50]}")
+                        recuperados += 1
+                        print(f"  📅 {t.get('name', '')[:50]} → {p['due_date'][:10]}")
                     time.sleep(0.3)
                 except Exception as e:
-                    print(f"  ⚠️  Erro ao buscar task {t['id']}: {e}")
+                    print(f"  ⚠️  Erro task {t['id']}: {e}")
 
             parsed.append(p)
 
@@ -148,7 +144,7 @@ def sync_novos_criativos():
         page += 1
         time.sleep(0.5)
 
-    print(f"  ✅ Novos criativos: {total} tasks processadas")
+    print(f"  ✅ Novos criativos: {total} tasks | {recuperados} due_dates recuperados")
 
 # ── Full sync ──────────────────────────────────────────────
 
