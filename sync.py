@@ -122,9 +122,6 @@ def full_sync():
     teams = get_teams()
     total = 0
 
-    # Calcula threshold de 7 dias atrás em ms
-    seven_days_ms = int((datetime.now(tz=timezone.utc).timestamp() - 7 * 86400) * 1000)
-
     for team in teams:
         spaces = get_spaces(team["id"])
         for space in spaces:
@@ -142,23 +139,13 @@ def full_sync():
                     parsed = []
                     for t in tasks_raw:
                         p = parse_task(t, sid, sname, lid, lname)
-                        # Para lista Novos criativos, busca due_date individual
-                        # apenas para tasks atualizadas nos últimos 7 dias
+                        # Para lista Novos criativos, busca due_date individual se null
                         if is_novos_criativos and p["due_date"] is None:
-                            # date_updated pode vir como ms (int/str) ou ISO string
-                            raw_upd = t.get("date_updated", 0) or 0
-                            try:
-                                date_updated_ms = int(raw_upd)
-                            except (ValueError, TypeError):
-                                date_updated_ms = 0
-                            if date_updated_ms >= seven_days_ms:
-                                due = get_task_due_date(t["id"])
-                                if due:
-                                    p["due_date"] = due
-                                    print(f"  📅 due_date recuperado: {t.get('name', '')[:40]}")
-                                time.sleep(0.5)
-                            else:
-                                print(f"  ⏭️  Ignorando (antiga): {t.get('name', '')[:40]}")
+                            due = get_task_due_date(t["id"])
+                            if due:
+                                p["due_date"] = due
+                                print(f"  📅 due_date recuperado: {t.get('name', '')[:40]}")
+                            time.sleep(0.3)
                         parsed.append(p)
                     upsert_tasks(parsed)
                     total += len(parsed)
