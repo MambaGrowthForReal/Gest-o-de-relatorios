@@ -215,12 +215,12 @@ const SUPABASE_URL = "https://wlfrmnpntpnbjekwnvcs.supabase.co";
 const SUPABASE_KEY = "sb_publishable_CGieCLKqBEzElgBH9Y8QLg_UWKkLom-";
 
 const EDITORS = [
-  { key: "luan",             label: "Luan",       initials: "LU", color: "#2a6fc4" },
-  { key: "malcom",           label: "Malcom",      initials: "MA", color: "#c9a84c" },
-  { key: "gustavo teixeira", label: "Gustavo T.",  initials: "GT", color: "#2a6fc4" },
-  { key: "victor ravi",      label: "Victor Ravi", initials: "VR", color: "#9b59b6" },
-  { key: "vitu",             label: "Vitu",        initials: "VI", color: "#e74c3c" },
-  { key: "thiago",           label: "Thiago",      initials: "TH", color: "#2a6fc4" },
+  { id: 82160031,  label: "Luan",       initials: "LU", color: "#2a6fc4" },
+  { id: 89397911,  label: "Malcom",     initials: "MA", color: "#c9a84c" },
+  { id: 170645656, label: "Gustavo T.", initials: "GT", color: "#2a6fc4" },
+  { id: 89297830,  label: "Victor Ravi",initials: "VR", color: "#9b59b6" },
+  { id: 89362557,  label: "Vitu",       initials: "VI", color: "#e74c3c" },
+  { id: 89133258,  label: "Thiago",     initials: "TH", color: "#1D9E75" },
 ];
 
 let adsChartInstance = null;
@@ -261,9 +261,8 @@ function showPage(id) {
 function getEditorKey(assignees) {
   if (!Array.isArray(assignees)) return null;
   for (const a of assignees) {
-    const raw = normalize((a.username || a.email || a.name || "").split("@")[0].replace(/[._]/g," "));
     for (const ed of EDITORS) {
-      if (ed.key.split(" ").every(p => raw.includes(p))) return ed.key;
+      if (a.id === ed.id) return ed.id;
     }
   }
   return null;
@@ -302,17 +301,17 @@ async function loadAds() {
 
     // Por editor
     const es = {};
-    EDITORS.forEach(e => es[e.key] = {total:0, done:0});
+    EDITORS.forEach(e => es[e.id] = {total:0, done:0});
     tasks.forEach(t => {
       const k = getEditorKey(t.assignees);
-      if (k && es[k]) {
+      if (k !== null && es[k] !== undefined) {
         es[k].total++;
         if (normalize(t.status||"").includes("complete")) es[k].done++;
       }
     });
 
     document.getElementById('editorsGrid').innerHTML = EDITORS.map(ed => {
-      const s = es[ed.key];
+      const s = es[ed.id];
       if (s.total === 0) return '';
       const p = Math.round(s.done/s.total*100);
       const col = pctColor(p);
@@ -333,13 +332,13 @@ async function loadAds() {
     }).filter(Boolean).join('');
 
     // Chart
-    const activeEditors = EDITORS.filter(e => es[e.key].total > 0);
+    const activeEditors = EDITORS.filter(e => es[e.id].total > 0);
     if (adsChartInstance) adsChartInstance.destroy();
     adsChartInstance = new Chart(document.getElementById('adsChart').getContext('2d'), {
       type:'bar',
       data:{
         labels: activeEditors.map(e=>e.label),
-        datasets:[{ label:'Concluídos', data:activeEditors.map(e=>es[e.key].done),
+        datasets:[{ label:'Concluídos', data:activeEditors.map(e=>es[e.id].done),
           backgroundColor:activeEditors.map(e=>e.color+'cc'), borderRadius:6, borderSkipped:false }]
       },
       options:{
