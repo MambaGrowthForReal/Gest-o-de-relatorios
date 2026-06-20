@@ -56,7 +56,9 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
 .vsl-qtd{font-size:13px;font-weight:600;color:#fff;width:20px;text-align:center;}
 .vsl-status{font-size:10px;font-weight:500;padding:2px 8px;border-radius:20px;}
 .vsl-status.pendente{background:rgba(102,102,102,.2);color:#888;}
-.vsl-status.concluido{background:rgba(29,158,117,.15);color:#1D9E75;}
+.loading{text-align:center;padding:60px;color:rgba(255,255,255,.3);font-size:13px;}
+.error-box{color:#e74c3c;font-size:12px;padding:10px 14px;background:rgba(231,76,60,.1);border-radius:8px;margin-bottom:16px;border:1px solid rgba(231,76,60,.2);}
+.sync-info{font-size:11px;color:rgba(255,255,255,.2);text-align:right;margin-top:16px;}
 </style>
 </head>
 <body>
@@ -80,66 +82,26 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
 
 <!-- ADS -->
 <div class="page active" id="page-ads">
-  <div class="week-label">Semana atual &middot; Junho 2026</div>
-  <div class="kpi-row">
-    <div class="kpi"><div class="kpi-label">Ads Planejados</div>
-      <div class="kpi-value">65</div><div class="kpi-sub">total da semana</div></div>
-    <div class="kpi"><div class="kpi-label">Ads Entregues</div>
-      <div class="kpi-value">58</div><div class="kpi-sub">status conclu&iacute;do</div></div>
-    <div class="kpi"><div class="kpi-label">Cumprimento Geral</div>
-      <div class="kpi-value" style="color:#1D9E75;">89%</div>
-      <div class="pct-track"><div class="pct-fill" style="width:89%;background:#1D9E75;"></div></div></div>
-  </div>
-  <div class="sec-label">Performance por Editor</div>
-  <div class="editors-grid"><div class="ecard">
-      <div class="ehead"><div class="eavatar" style="background:#e74c3c;color:#fff;">VI</div>
-        <div><div class="ename">Vitu</div><div class="erole">Editor</div></div></div>
-      <div class="estats">
-        <div><div class="eads-label">Ads entregues</div><div class="evideos">8</div>
-          <div class="evideos-sub">de 8 planejados</div></div>
-        <div><div class="epct-val" style="color:#1D9E75;">100%</div><div class="epct-sub">cumprimento</div></div>
-      </div>
-      <div class="ebar-track"><div class="ebar-fill" style="width:100%;background:#1D9E75;"></div></div>
-    </div><div class="ecard">
-      <div class="ehead"><div class="eavatar" style="background:#2a6fc4;color:#fff;">GT</div>
-        <div><div class="ename">Gustavo T.</div><div class="erole">Editor</div></div></div>
-      <div class="estats">
-        <div><div class="eads-label">Ads entregues</div><div class="evideos">15</div>
-          <div class="evideos-sub">de 17 planejados</div></div>
-        <div><div class="epct-val" style="color:#1D9E75;">88%</div><div class="epct-sub">cumprimento</div></div>
-      </div>
-      <div class="ebar-track"><div class="ebar-fill" style="width:88%;background:#1D9E75;"></div></div>
-    </div><div class="ecard">
-      <div class="ehead"><div class="eavatar" style="background:#c9a84c;color:#000;">MA</div>
-        <div><div class="ename">Malcom</div><div class="erole">Editor</div></div></div>
-      <div class="estats">
-        <div><div class="eads-label">Ads entregues</div><div class="evideos">13</div>
-          <div class="evideos-sub">de 18 planejados</div></div>
-        <div><div class="epct-val" style="color:#c9a84c;">72%</div><div class="epct-sub">cumprimento</div></div>
-      </div>
-      <div class="ebar-track"><div class="ebar-fill" style="width:72%;background:#c9a84c;"></div></div>
-    </div><div class="ecard">
-      <div class="ehead"><div class="eavatar" style="background:#9b59b6;color:#fff;">VR</div>
-        <div><div class="ename">Victor Ravi</div><div class="erole">Editor</div></div></div>
-      <div class="estats">
-        <div><div class="eads-label">Ads entregues</div><div class="evideos">10</div>
-          <div class="evideos-sub">de 10 planejados</div></div>
-        <div><div class="epct-val" style="color:#1D9E75;">100%</div><div class="epct-sub">cumprimento</div></div>
-      </div>
-      <div class="ebar-track"><div class="ebar-fill" style="width:100%;background:#1D9E75;"></div></div>
-    </div><div class="ecard">
-      <div class="ehead"><div class="eavatar" style="background:#2a6fc4;color:#fff;">LU</div>
-        <div><div class="ename">Luan</div><div class="erole">Editor</div></div></div>
-      <div class="estats">
-        <div><div class="eads-label">Ads entregues</div><div class="evideos">12</div>
-          <div class="evideos-sub">de 12 planejados</div></div>
-        <div><div class="epct-val" style="color:#1D9E75;">100%</div><div class="epct-sub">cumprimento</div></div>
-      </div>
-      <div class="ebar-track"><div class="ebar-fill" style="width:100%;background:#1D9E75;"></div></div>
-    </div></div>
-  <div class="chart-section">
-    <div class="sec-label" style="margin-bottom:16px;">Ads entregues por editor</div>
-    <div class="chart-wrap"><canvas id="adsChart"></canvas></div>
+  <div id="adsError" class="error-box" style="display:none;"></div>
+  <div id="adsLoading" class="loading">&#9881; Carregando dados do ClickUp...</div>
+  <div id="adsContent" style="display:none;">
+    <div class="week-label" id="adsWeekLabel"></div>
+    <div class="kpi-row">
+      <div class="kpi"><div class="kpi-label">Criativos no per&iacute;odo</div>
+        <div class="kpi-value" id="kpiTotal">-</div><div class="kpi-sub">tasks com "criativo" no nome</div></div>
+      <div class="kpi"><div class="kpi-label">Conclu&iacute;dos</div>
+        <div class="kpi-value" id="kpiDone">-</div><div class="kpi-sub">status conclu&iacute;do</div></div>
+      <div class="kpi"><div class="kpi-label">Cumprimento Geral</div>
+        <div class="kpi-value" id="kpiPct" style="color:#c9a84c;">-</div>
+        <div class="pct-track"><div class="pct-fill" id="mainBar" style="width:0%;background:#c9a84c;"></div></div></div>
+    </div>
+    <div class="sec-label">Performance por Editor</div>
+    <div class="editors-grid" id="editorsGrid"></div>
+    <div class="chart-section">
+      <div class="sec-label" style="margin-bottom:16px;">Criativos entregues por editor</div>
+      <div class="chart-wrap"><canvas id="adsChart"></canvas></div>
+    </div>
+    <div class="sync-info" id="syncInfo"></div>
   </div>
 </div>
 
@@ -249,7 +211,31 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
 </div>
 
 <script>
+const SUPABASE_URL = "https://wlfrmnpntpnbjekwnvcs.supabase.co";
+const SUPABASE_KEY = "sb_publishable_CGieCLKqBEzElgBH9Y8QLg_UWKkLom-";
+
+const EDITORS = [
+  { key: "luan",             label: "Luan",       initials: "LU", color: "#2a6fc4" },
+  { key: "malcom",           label: "Malcom",      initials: "MA", color: "#c9a84c" },
+  { key: "gustavo teixeira", label: "Gustavo T.",  initials: "GT", color: "#2a6fc4" },
+  { key: "victor ravi",      label: "Victor Ravi", initials: "VR", color: "#9b59b6" },
+  { key: "vitu",             label: "Vitu",        initials: "VI", color: "#e74c3c" },
+  { key: "thiago",           label: "Thiago",      initials: "TH", color: "#2a6fc4" },
+];
+
+let adsChartInstance = null;
 let currentSub = 'ads';
+
+function normalize(s) {
+  return (s||"").toLowerCase().normalize("NFD")
+    .replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
+}
+
+function pctColor(p) {
+  if (p >= 80) return "#1D9E75";
+  if (p >= 50) return "#c9a84c";
+  return "#e74c3c";
+}
 
 function selectMain(key, btn) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -272,22 +258,138 @@ function showPage(id) {
   if (el) el.classList.add('active');
 }
 
-new Chart(document.getElementById('adsChart').getContext('2d'), {
-  type:'bar',
-  data:{ labels:['Vitu', 'Gustavo T.', 'Malcom', 'Victor Ravi', 'Luan'], datasets:[{ label:'Entregues', data:[8, 15, 13, 10, 12], backgroundColor:['#e74c3ccc', '#2a6fc4cc', '#c9a84ccc', '#9b59b6cc', '#2a6fc4cc'], borderRadius:6, borderSkipped:false }] },
-  options:{ responsive:true, maintainAspectRatio:false,
-    plugins:{ legend:{display:false}, tooltip:{backgroundColor:"#111",titleColor:"#fff",bodyColor:"#c9a84c",borderColor:"rgba(255,255,255,.1)",borderWidth:1,callbacks:{label:c=>" "+c.parsed.y+" ads"}} },
-    scales:{ x:{grid:{display:false},ticks:{color:"rgba(255,255,255,.45)",font:{size:12,family:"Inter"}},border:{display:false}}, y:{grid:{color:"rgba(255,255,255,.05)"},ticks:{color:"rgba(255,255,255,.3)",font:{size:11,family:"Inter"}},border:{display:false},max:20} }
+function getEditorKey(assignees) {
+  if (!Array.isArray(assignees)) return null;
+  for (const a of assignees) {
+    const raw = normalize((a.username || a.email || a.name || "").split("@")[0].replace(/[._]/g," "));
+    for (const ed of EDITORS) {
+      if (ed.key.split(" ").every(p => raw.includes(p))) return ed.key;
+    }
   }
-});
+  return null;
+}
 
-new Chart(document.getElementById('copyChart').getContext('2d'), {
-  type:'bar',
-  data:{ labels:['Milena', 'Shandler', 'Lavínia', 'Bianca'], datasets:[{ label:'Entregues', data:[55, 10, 44, 70], backgroundColor:['#2a6fc4cc', '#1D9E75cc', '#c9a84ccc', '#9b59b6cc'], borderRadius:6, borderSkipped:false }] },
-  options:{ responsive:true, maintainAspectRatio:false,
-    plugins:{ legend:{display:false}, tooltip:{backgroundColor:"#111",titleColor:"#fff",bodyColor:"#c9a84c",borderColor:"rgba(255,255,255,.1)",borderWidth:1,callbacks:{label:c=>" "+c.parsed.y+" ads"}} },
-    scales:{ x:{grid:{display:false},ticks:{color:"rgba(255,255,255,.45)",font:{size:12,family:"Inter"}},border:{display:false}}, y:{grid:{color:"rgba(255,255,255,.05)"},ticks:{color:"rgba(255,255,255,.3)",font:{size:11,family:"Inter"}},border:{display:false},max:80} }
+async function loadAds() {
+  document.getElementById('adsLoading').style.display = 'block';
+  document.getElementById('adsContent').style.display = 'none';
+  document.getElementById('adsError').style.display = 'none';
+
+  try {
+    // Busca tasks da lista Novos criativos com "criativo" no nome
+    const url = SUPABASE_URL + "/rest/v1/tasks"
+      + "?list_name=ilike.*novos%20criativos*"
+      + "&name=ilike.*criativo*"
+      + "&select=id,name,status,assignees,due_date,date_updated"
+      + "&limit=2000";
+
+    const res = await fetch(url, {
+      headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY }
+    });
+
+    if (!res.ok) throw new Error("HTTP " + res.status + ": " + await res.text());
+    const tasks = await res.json();
+
+    const total = tasks.length;
+    const done  = tasks.filter(t => normalize(t.status||"").includes("conclu")).length;
+    const pct   = total > 0 ? Math.round(done/total*100) : 0;
+
+    document.getElementById('kpiTotal').textContent = total;
+    document.getElementById('kpiDone').textContent  = done;
+    document.getElementById('kpiPct').textContent   = pct + "%";
+    document.getElementById('kpiPct').style.color   = pctColor(pct);
+    document.getElementById('mainBar').style.width   = pct + "%";
+    document.getElementById('mainBar').style.background = pctColor(pct);
+
+    // Por editor
+    const es = {};
+    EDITORS.forEach(e => es[e.key] = {total:0, done:0});
+    tasks.forEach(t => {
+      const k = getEditorKey(t.assignees);
+      if (k && es[k]) {
+        es[k].total++;
+        if (normalize(t.status||"").includes("conclu")) es[k].done++;
+      }
+    });
+
+    document.getElementById('editorsGrid').innerHTML = EDITORS.map(ed => {
+      const s = es[ed.key];
+      if (s.total === 0) return '';
+      const p = Math.round(s.done/s.total*100);
+      const col = pctColor(p);
+      const tc = ed.color === "#c9a84c" ? "#000" : "#fff";
+      return '<div class="ecard">'
+        +'<div class="ehead"><div class="eavatar" style="background:'+ed.color+';color:'+tc+';">'+ed.initials+'</div>'
+        +'<div><div class="ename">'+ed.label+'</div><div class="erole">Editor</div></div></div>'
+        +'<div class="estats"><div>'
+        +'<div class="eads-label">Criativos conclu&iacute;dos</div>'
+        +'<div class="evideos">'+s.done+'</div>'
+        +'<div class="evideos-sub">de '+s.total+' tasks</div>'
+        +'</div><div>'
+        +'<div class="epct-val" style="color:'+col+';">'+p+'%</div>'
+        +'<div class="epct-sub">cumprimento</div>'
+        +'</div></div>'
+        +'<div class="ebar-track"><div class="ebar-fill" style="width:'+p+'%;background:'+col+';"></div></div>'
+        +'</div>';
+    }).filter(Boolean).join('');
+
+    // Chart
+    const activeEditors = EDITORS.filter(e => es[e.key].total > 0);
+    if (adsChartInstance) adsChartInstance.destroy();
+    adsChartInstance = new Chart(document.getElementById('adsChart').getContext('2d'), {
+      type:'bar',
+      data:{
+        labels: activeEditors.map(e=>e.label),
+        datasets:[{ label:'Concluídos', data:activeEditors.map(e=>es[e.key].done),
+          backgroundColor:activeEditors.map(e=>e.color+'cc'), borderRadius:6, borderSkipped:false }]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false},
+          tooltip:{backgroundColor:"#111",titleColor:"#fff",bodyColor:"#c9a84c",
+            borderColor:"rgba(255,255,255,.1)",borderWidth:1,callbacks:{label:c=>" "+c.parsed.y+" criativos"}} },
+        scales:{
+          x:{grid:{display:false},ticks:{color:"rgba(255,255,255,.45)",font:{size:12,family:"Inter"}},border:{display:false}},
+          y:{grid:{color:"rgba(255,255,255,.05)"},ticks:{color:"rgba(255,255,255,.3)",font:{size:11,family:"Inter"}},border:{display:false}}
+        }
+      }
+    });
+
+    // Data label
+    const latest = tasks.reduce((m,t)=>Math.max(m,t.date_updated||0),0);
+    document.getElementById('adsWeekLabel').textContent = total + " tasks encontradas";
+    if (latest) document.getElementById('syncInfo').textContent =
+      "Ultima sync ClickUp: " + new Date(latest).toLocaleString('pt-BR');
+
+    document.getElementById('adsLoading').style.display = 'none';
+    document.getElementById('adsContent').style.display = 'block';
+
+  } catch(e) {
+    document.getElementById('adsLoading').style.display = 'none';
+    const el = document.getElementById('adsError');
+    el.textContent = "Erro ao carregar: " + e.message;
+    el.style.display = 'block';
+    console.error(e);
   }
+}
+
+// Copy chart
+window.addEventListener('load', () => {
+  new Chart(document.getElementById('copyChart').getContext('2d'), {
+    type:'bar',
+    data:{ labels:['Milena', 'Shandler', 'Lavínia', 'Bianca'], datasets:[{ label:'Entregues', data:[55, 10, 44, 70],
+      backgroundColor:['#2a6fc4cc', '#1D9E75cc', '#c9a84ccc', '#9b59b6cc'], borderRadius:6, borderSkipped:false }] },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false},
+        tooltip:{backgroundColor:"#111",titleColor:"#fff",bodyColor:"#c9a84c",
+          borderColor:"rgba(255,255,255,.1)",borderWidth:1,callbacks:{label:c=>" "+c.parsed.y+" ads"}} },
+      scales:{
+        x:{grid:{display:false},ticks:{color:"rgba(255,255,255,.45)",font:{size:12,family:"Inter"}},border:{display:false}},
+        y:{grid:{color:"rgba(255,255,255,.05)"},ticks:{color:"rgba(255,255,255,.3)",font:{size:11,family:"Inter"}},border:{display:false},max:80}
+      }
+    }
+  });
+
+  loadAds();
 });
 </script>
 </body>
