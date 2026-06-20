@@ -259,9 +259,10 @@ async function loadAds() {
     if (!res.ok) throw new Error("HTTP " + res.status + ": " + await res.text());
 
     const allTasks = await res.json();
-    // Filtrar por data_updated no periodo
+    // Filtrar por date_updated no periodo (formato ISO string)
     const tasks = allTasks.filter(t => {
-      const upd = Number(t.date_updated);
+      if (!t.date_updated) return false;
+      const upd = new Date(t.date_updated).getTime();
       return upd >= startMs && upd <= endMs;
     });
 
