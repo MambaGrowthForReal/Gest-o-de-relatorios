@@ -145,13 +145,20 @@ def full_sync():
                         # Para lista Novos criativos, busca due_date individual
                         # apenas para tasks atualizadas nos últimos 7 dias
                         if is_novos_criativos and p["due_date"] is None:
-                            date_updated_ms = int(t.get("date_updated", 0) or 0)
+                            # date_updated pode vir como ms (int/str) ou ISO string
+                            raw_upd = t.get("date_updated", 0) or 0
+                            try:
+                                date_updated_ms = int(raw_upd)
+                            except (ValueError, TypeError):
+                                date_updated_ms = 0
                             if date_updated_ms >= seven_days_ms:
                                 due = get_task_due_date(t["id"])
                                 if due:
                                     p["due_date"] = due
                                     print(f"  📅 due_date recuperado: {t.get('name', '')[:40]}")
                                 time.sleep(0.5)
+                            else:
+                                print(f"  ⏭️  Ignorando (antiga): {t.get('name', '')[:40]}")
                         parsed.append(p)
                     upsert_tasks(parsed)
                     total += len(parsed)
