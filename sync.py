@@ -2,14 +2,15 @@ import os
 import time
 import json
 import requests
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 # ── Configurações ──────────────────────────────────────────
 CLICKUP_TOKEN = os.getenv("CLICKUP_TOKEN", "pk_206504924_97P74AJM8PTO06YGY0P17EXV366HV81N")
 SUPABASE_URL  = os.getenv("SUPABASE_URL",  "https://wlfrmnpntpnbjekwnvcs.supabase.co")
 SUPABASE_KEY  = os.getenv("SUPABASE_KEY",  "sb_secret_r7ZC2OnfvL7NCKsm_nSrIA_c6oS7BOZ")
 
-POLL_INTERVAL_HOURS = 6  # roda a cada 6 horas
+POLL_INTERVAL_HOURS = 6
+NOVOS_CRIATIVOS_LIST_ID = "901700896208"
 
 CLICKUP_HEADERS  = {"Authorization": CLICKUP_TOKEN}
 SUPABASE_HEADERS = {
@@ -53,12 +54,16 @@ def get_tasks_in_list(list_id, page=0):
         "page": page,
         "order_by": "updated",
         "reverse": "true",
-        "fields[]": "due_date",
     }
     r = requests.get(f"https://api.clickup.com/api/v2/list/{list_id}/task", headers=CLICKUP_HEADERS, params=params)
     r.raise_for_status()
     data = r.json()
     return data.get("tasks", []), data.get("last_page", True)
+
+def get_task_detail(task_id):
+    r = requests.get(f"https://api.clickup.com/api/v2/task/{task_id}", headers=CLICKUP_HEADERS)
+    r.raise_for_status()
+    return r.json()
 
 # ── Parser de tarefa ───────────────────────────────────────
 
@@ -100,20 +105,50 @@ def upsert_tasks(tasks):
     else:
         print(f"  ✅ {len(tasks)} tarefa(s) sincronizada(s)")
 
-# ── Busca task individual para pegar due_date ──────────────
+# ── Sync especial: Novos criativos com due_date individual ─
 
-def get_task_due_date(task_id):
-    try:
-        r = requests.get(f"https://api.clickup.com/api/v2/task/{task_id}", headers=CLICKUP_HEADERS)
-        r.raise_for_status()
-        data = r.json()
-        ms = data.get("due_date")
-        if not ms:
-            return None
-        return datetime.fromtimestamp(int(ms) / 1000, tz=timezone.utc).isoformat()
-    except Exception as e:
-        print(f"  ⚠️  Erro ao buscar task {task_id}: {e}")
-        return None
+def sync_novos_criativos():
+    print("  🎯 Sync especial: Novos criativos (due_date individual)")
+    seven_days_ago = datetime.now(tz=timezone.utc) - timedelta(days=7)
+    seven_days_ms  = int(seven_days_ago.timestamp() * 1000)
+
+    page = 0
+    total = 0
+    while True:
+        tasks_raw, last_page = get_tasks_in_list(NOVOS_CRIATIVOS_LIST_ID, page)
+        parsed = []
+        for t in tasks_raw:
+            # Só processa tasks atualizadas nos últimos 7 dias
+            upd_ms = int(t.get("date_updated", 0) or 0)
+            if upd_ms < seven_days_ms:
+                continue
+
+            p = parse_task(t, "", "Tráfego", NOVOS_CRIATIVOS_LIST_ID, "Novos criativos")
+
+            # Se due_date vier null, busca individualmente
+            if p["due_date"] is None:
+                try:
+                    detail = get_task_detail(t["id"])
+                    ms = detail.get("due_date")
+                    if ms:
+                        p["due_date"] = datetime.fromtimestamp(int(ms) / 1000, tz=timezone.utc).isoformat()
+                        print(f"  📅 due_date recuperado: {t.get('name', '')[:50]}")
+                    time.sleep(0.3)
+                except Exception as e:
+                    print(f"  ⚠️  Erro ao buscar task {t['id']}: {e}")
+
+            parsed.append(p)
+
+        if parsed:
+            upsert_tasks(parsed)
+            total += len(parsed)
+
+        if last_page or not tasks_raw:
+            break
+        page += 1
+        time.sleep(0.5)
+
+    print(f"  ✅ Novos criativos: {total} tasks processadas")
 
 # ── Full sync ──────────────────────────────────────────────
 
@@ -121,6 +156,9 @@ def full_sync():
     print(f"\n🔄 Iniciando sync — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     teams = get_teams()
     total = 0
+
+    # Sync especial para Novos criativos primeiro
+    sync_novos_criativos()
 
     for team in teams:
         spaces = get_spaces(team["id"])
@@ -132,29 +170,16 @@ def full_sync():
 
             for lst in lists:
                 lid, lname = lst["id"], lst["name"]
-                is_novos_criativos = "novos criativos" in lname.lower()
-                if is_novos_criativos:
-                    print(f"  🔍 Processando lista: {lname}")
                 page = 0
                 while True:
                     tasks_raw, last_page = get_tasks_in_list(lid, page)
-                    parsed = []
-                    for t in tasks_raw:
-                        p = parse_task(t, sid, sname, lid, lname)
-                        # Para lista Novos criativos, busca due_date individual se null
-                        if is_novos_criativos and p["due_date"] is None:
-                            due = get_task_due_date(t["id"])
-                            if due:
-                                p["due_date"] = due
-                                print(f"  📅 due_date recuperado: {t.get('name', '')[:40]}")
-                            time.sleep(0.3)
-                        parsed.append(p)
+                    parsed = [parse_task(t, sid, sname, lid, lname) for t in tasks_raw]
                     upsert_tasks(parsed)
                     total += len(parsed)
                     if last_page or not tasks_raw:
                         break
                     page += 1
-                    time.sleep(0.5)  # respeita rate limit
+                    time.sleep(0.5)
 
     print(f"✅ Sync completo — {total} tarefas processadas\n")
 
