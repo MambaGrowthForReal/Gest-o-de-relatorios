@@ -263,7 +263,15 @@ async function loadAds() {
       headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY }
     });
     if (!res.ok) throw new Error("HTTP " + res.status + ": " + await res.text());
-    const tasks = await res.json();
+    const allTasks = await res.json();
+
+    // Filtrar por data no JS usando date_updated (ms)
+    const startMs = new Date(start + 'T00:00:00').getTime();
+    const endMs   = new Date(endDate + 'T23:59:59').getTime();
+    const tasks = allTasks.filter(t => {
+      const upd = Number(t.date_updated);
+      return upd >= startMs && upd <= endMs;
+    });
 
     const total = tasks.length;
     const done  = tasks.filter(t => (t.status||"") === "complete").length;
