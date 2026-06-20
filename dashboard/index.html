@@ -82,6 +82,13 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
 
 <!-- ADS -->
 <div class="page active" id="page-ads">
+  <div class="filters">
+    <label>De</label>
+    <input type="date" id="dtStart" value="2026-06-15">
+    <label>At&eacute;</label>
+    <input type="date" id="dtEnd">
+    <button class="btn-apply" onclick="loadAds()">Aplicar</button>
+  </div>
   <div id="adsError" class="error-box" style="display:none;"></div>
   <div id="adsLoading" class="loading">&#9881; Carregando dados do ClickUp...</div>
   <div id="adsContent" style="display:none;">
@@ -278,10 +285,17 @@ async function loadAds() {
   document.getElementById('adsError').style.display = 'none';
 
   try {
-    // Busca tasks da lista Novos criativos com "criativo" no nome
+    const start = document.getElementById('dtStart').value;
+    const end   = document.getElementById('dtEnd').value;
+    const startMs = new Date(start + 'T00:00:00').getTime();
+    const endMs   = end ? new Date(end + 'T23:59:59').getTime() : Date.now();
+
+    // Busca tasks da lista Novos criativos com "criativo" no nome, filtradas por date_updated
     const url = SUPABASE_URL + "/rest/v1/tasks"
       + "?list_name=ilike.*novos%20criativos*"
       + "&name=ilike.*Criativos*"
+      + "&date_updated=gte." + startMs
+      + "&date_updated=lte." + endMs
       + "&select=id,name,status,assignees,due_date,date_updated"
       + "&limit=2000";
 
@@ -377,6 +391,13 @@ async function loadAds() {
 
 // Copy chart
 window.addEventListener('load', () => {
+  // Setar data final como hoje
+  const today = new Date();
+  const y = today.getFullYear();
+  const m = String(today.getMonth()+1).padStart(2,'0');
+  const d = String(today.getDate()).padStart(2,'0');
+  document.getElementById('dtEnd').value = y+'-'+m+'-'+d;
+
   new Chart(document.getElementById('copyChart').getContext('2d'), {
     type:'bar',
     data:{ labels:['Milena', 'Shandler', 'Lavínia', 'Bianca'], datasets:[{ label:'Entregues', data:[55, 10, 44, 70],
