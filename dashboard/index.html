@@ -102,9 +102,9 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
   <div id="adsContent" style="display:none;">
     <div class="kpi-row">
       <div class="kpi"><div class="kpi-label">Criativos no per&iacute;odo</div>
-        <div class="kpi-value" id="kpiTotal">-</div><div class="kpi-sub">tasks com "Criativos" no nome</div></div>
+        <div class="kpi-value" id="kpiTotal">-</div><div class="kpi-sub">criativos (tasks &times; 5)</div></div>
       <div class="kpi"><div class="kpi-label">Conclu&iacute;dos</div>
-        <div class="kpi-value" id="kpiDone">-</div><div class="kpi-sub">status complete</div></div>
+        <div class="kpi-value" id="kpiDone">-</div><div class="kpi-sub">status conclu&iacute;do</div></div>
       <div class="kpi"><div class="kpi-label">Cumprimento Geral</div>
         <div class="kpi-value" id="kpiPct">-</div>
         <div class="pct-track"><div class="pct-fill" id="mainBar" style="width:0%"></div></div></div>
@@ -250,7 +250,7 @@ async function loadAds() {
     const url = SUPABASE_URL + "/rest/v1/tasks"
       + "?list_name=ilike.*novos%20criativos*"
       + "&name=ilike.*Criativos*"
-      + "&select=id,name,status,assignees,date_updated"
+      + "&select=id,name,status,assignees,date_updated,due_date"
       + "&limit=2000";
 
     const res = await fetch(url, {
@@ -259,15 +259,17 @@ async function loadAds() {
     if (!res.ok) throw new Error("HTTP " + res.status + ": " + await res.text());
 
     const allTasks = await res.json();
-    // Filtrar por date_updated no periodo (formato ISO string)
+    // Filtrar por due_date no periodo (formato ISO string)
     const tasks = allTasks.filter(t => {
-      if (!t.date_updated) return false;
-      const upd = new Date(t.date_updated).getTime();
-      return upd >= startMs && upd <= endMs;
+      if (!t.due_date) return false;
+      const due = new Date(t.due_date).getTime();
+      return due >= startMs && due <= endMs;
     });
 
-    const total = tasks.length;
-    const done  = tasks.filter(t => (t.status||"") === "complete").length;
+    const totalTasks = tasks.length;
+    const doneTasks  = tasks.filter(t => (t.status||"") === "complete").length;
+    const total = totalTasks * 5;
+    const done  = doneTasks * 5;
     const pct   = total > 0 ? Math.round(done/total*100) : 0;
 
     document.getElementById('kpiTotal').textContent = total;
@@ -290,7 +292,9 @@ async function loadAds() {
     const activeEditors = EDITORS.filter(e => es[e.id].total > 0);
     document.getElementById('editorsGrid').innerHTML = activeEditors.map(ed => {
       const s = es[ed.id];
-      const p = Math.round(s.done/s.total*100);
+      const crDone  = s.done * 5;
+      const crTotal = s.total * 5;
+      const p = s.total > 0 ? Math.round(s.done/s.total*100) : 0;
       const col = pctColor(p);
       const tc = ed.color === "#c9a84c" ? "#000" : "#fff";
       return '<div class="ecard">'
@@ -298,8 +302,8 @@ async function loadAds() {
         +'<div><div class="ename">'+ed.label+'</div><div class="erole">Editor</div></div></div>'
         +'<div class="estats"><div>'
         +'<div class="eads-label">Criativos conclu&iacute;dos</div>'
-        +'<div class="evideos">'+s.done+'</div>'
-        +'<div class="evideos-sub">de '+s.total+' tasks</div>'
+        +'<div class="evideos">'+crDone+'</div>'
+        +'<div class="evideos-sub">de '+crTotal+' criativos</div>'
         +'</div><div>'
         +'<div class="epct-val" style="color:'+col+';">'+p+'%</div>'
         +'<div class="epct-sub">cumprimento</div>'
