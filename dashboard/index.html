@@ -23,7 +23,12 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
 .page{display:none;padding:24px 28px;}
 .page.active{display:block;}
 .placeholder{display:flex;align-items:center;justify-content:center;height:300px;color:rgba(255,255,255,.15);font-size:14px;border:1px dashed rgba(255,255,255,.08);border-radius:12px;}
-.week-label{font-size:11px;color:rgba(255,255,255,.2);margin-bottom:20px;}
+.filters{display:flex;gap:8px;align-items:center;margin-bottom:24px;}
+.filters label{font-size:11px;color:rgba(255,255,255,.4);}
+.filters input[type=date]{background:#0f0f0f;border:1px solid rgba(255,255,255,.1);color:#fff;font-size:12px;padding:7px 10px;border-radius:7px;outline:none;font-family:Inter,sans-serif;}
+.filters input[type=date]::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.3;}
+.btn-apply{background:#2a6fc4;color:#fff;border:none;font-size:12px;font-weight:500;font-family:Inter,sans-serif;padding:8px 18px;border-radius:7px;cursor:pointer;}
+.btn-apply:hover{background:#1d5ba8;}
 .kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
 .kpi{background:#0d0d0d;border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:18px;}
 .kpi-label{font-size:10px;font-weight:500;color:rgba(255,255,255,.38);text-transform:uppercase;letter-spacing:.09em;margin-bottom:12px;}
@@ -90,22 +95,21 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
     <button class="btn-apply" onclick="loadAds()">Aplicar</button>
   </div>
   <div id="adsError" class="error-box" style="display:none;"></div>
-  <div id="adsLoading" class="loading">&#9881; Carregando dados do ClickUp...</div>
+  <div id="adsLoading" class="loading">&#9881; Carregando dados...</div>
   <div id="adsContent" style="display:none;">
-    <div class="week-label" id="adsWeekLabel"></div>
     <div class="kpi-row">
       <div class="kpi"><div class="kpi-label">Criativos no per&iacute;odo</div>
-        <div class="kpi-value" id="kpiTotal">-</div><div class="kpi-sub">tasks com "criativo" no nome</div></div>
+        <div class="kpi-value" id="kpiTotal">-</div><div class="kpi-sub">tasks com "Criativos" no nome</div></div>
       <div class="kpi"><div class="kpi-label">Conclu&iacute;dos</div>
-        <div class="kpi-value" id="kpiDone">-</div><div class="kpi-sub">status conclu&iacute;do</div></div>
+        <div class="kpi-value" id="kpiDone">-</div><div class="kpi-sub">status complete</div></div>
       <div class="kpi"><div class="kpi-label">Cumprimento Geral</div>
-        <div class="kpi-value" id="kpiPct" style="color:#c9a84c;">-</div>
-        <div class="pct-track"><div class="pct-fill" id="mainBar" style="width:0%;background:#c9a84c;"></div></div></div>
+        <div class="kpi-value" id="kpiPct">-</div>
+        <div class="pct-track"><div class="pct-fill" id="mainBar" style="width:0%"></div></div></div>
     </div>
     <div class="sec-label">Performance por Editor</div>
     <div class="editors-grid" id="editorsGrid"></div>
     <div class="chart-section">
-      <div class="sec-label" style="margin-bottom:16px;">Criativos entregues por editor</div>
+      <div class="sec-label" style="margin-bottom:16px;">Criativos conclu&iacute;dos por editor</div>
       <div class="chart-wrap"><canvas id="adsChart"></canvas></div>
     </div>
     <div class="sync-info" id="syncInfo"></div>
@@ -114,129 +118,79 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
 
 <!-- VSL -->
 <div class="page" id="page-vsl">
-  <div class="week-label">Semana atual &middot; Junho 2026</div>
-  <div class="sec-label">Performance por Editor</div>
-  <div class="editors-grid-2"><div class="ecard">
+  <div class="sec-label" style="padding-top:24px;">Performance por Editor</div>
+  <div class="editors-grid-2" style="margin-top:14px;">
+    <div class="ecard">
       <div class="ehead"><div class="eavatar" style="background:#9b59b6;color:#fff;">VI</div>
         <div><div class="ename">Victor</div><div class="erole">Editor VSL</div></div></div>
-      <div class="vsl-items"><div class="vsl-item">
-          <span class="vsl-tipo">Lead</span>
-          <span class="vsl-qtd">2</span>
-          <span class="vsl-status pendente">Pendente</span>
-        </div></div>
+      <div class="vsl-items">
+        <div class="vsl-item"><span class="vsl-tipo">Lead</span><span class="vsl-qtd">2</span><span class="vsl-status pendente">Pendente</span></div>
+      </div>
       <div class="estats" style="margin-top:12px;">
-        <div><div class="eads-label">Total entregues</div><div class="evideos">0</div>
-          <div class="evideos-sub">de 2 planejados</div></div>
+        <div><div class="eads-label">Total entregues</div><div class="evideos">0</div><div class="evideos-sub">de 2 planejados</div></div>
         <div><div class="epct-val" style="color:#e74c3c;">0%</div><div class="epct-sub">cumprimento</div></div>
       </div>
       <div class="ebar-track"><div class="ebar-fill" style="width:0%;background:#e74c3c;"></div></div>
-    </div><div class="ecard">
+    </div>
+    <div class="ecard">
       <div class="ehead"><div class="eavatar" style="background:#2a6fc4;color:#fff;">TH</div>
         <div><div class="ename">Thiago</div><div class="erole">Editor VSL</div></div></div>
-      <div class="vsl-items"><div class="vsl-item">
-          <span class="vsl-tipo">Microlead</span>
-          <span class="vsl-qtd">1</span>
-          <span class="vsl-status pendente">Pendente</span>
-        </div><div class="vsl-item">
-          <span class="vsl-tipo">Lead</span>
-          <span class="vsl-qtd">3</span>
-          <span class="vsl-status pendente">Pendente</span>
-        </div></div>
+      <div class="vsl-items">
+        <div class="vsl-item"><span class="vsl-tipo">Microlead</span><span class="vsl-qtd">1</span><span class="vsl-status pendente">Pendente</span></div>
+        <div class="vsl-item"><span class="vsl-tipo">Lead</span><span class="vsl-qtd">3</span><span class="vsl-status pendente">Pendente</span></div>
+      </div>
       <div class="estats" style="margin-top:12px;">
-        <div><div class="eads-label">Total entregues</div><div class="evideos">0</div>
-          <div class="evideos-sub">de 4 planejados</div></div>
+        <div><div class="eads-label">Total entregues</div><div class="evideos">0</div><div class="evideos-sub">de 4 planejados</div></div>
         <div><div class="epct-val" style="color:#e74c3c;">0%</div><div class="epct-sub">cumprimento</div></div>
       </div>
       <div class="ebar-track"><div class="ebar-fill" style="width:0%;background:#e74c3c;"></div></div>
-    </div></div>
+    </div>
+  </div>
 </div>
 
 <!-- COPY -->
 <div class="page" id="page-copy">
-  <div class="week-label">Semana atual &middot; Junho 2026</div>
-  <div class="kpi-row">
-    <div class="kpi"><div class="kpi-label">Ads Planejados</div>
-      <div class="kpi-value">190</div><div class="kpi-sub">total da semana</div></div>
-    <div class="kpi"><div class="kpi-label">Ads Entregues</div>
-      <div class="kpi-value">179</div><div class="kpi-sub">status conclu&iacute;do</div></div>
-    <div class="kpi"><div class="kpi-label">Cumprimento Geral</div>
+  <div class="kpi-row" style="margin-top:24px;">
+    <div class="kpi"><div class="kpi-label">Planejados</div><div class="kpi-value">190</div></div>
+    <div class="kpi"><div class="kpi-label">Entregues</div><div class="kpi-value">179</div></div>
+    <div class="kpi"><div class="kpi-label">Cumprimento</div>
       <div class="kpi-value" style="color:#1D9E75;">94%</div>
       <div class="pct-track"><div class="pct-fill" style="width:94%;background:#1D9E75;"></div></div></div>
   </div>
   <div class="sec-label">Performance por Copywriter</div>
-  <div class="editors-grid-4"><div class="ecard">
-      <div class="ehead"><div class="eavatar" style="background:#2a6fc4;color:#fff;">MI</div>
-        <div><div class="ename">Milena</div><div class="erole">Copy</div></div></div>
-      <div class="estats">
-        <div><div class="eads-label">Ads entregues</div><div class="evideos">55</div>
-          <div class="evideos-sub">de 60 planejados</div></div>
-        <div><div class="epct-val" style="color:#1D9E75;">92%</div><div class="epct-sub">cumprimento</div></div>
-      </div>
-      <div class="ebar-track"><div class="ebar-fill" style="width:92%;background:#1D9E75;"></div></div>
-    </div><div class="ecard">
-      <div class="ehead"><div class="eavatar" style="background:#1D9E75;color:#fff;">SH</div>
-        <div><div class="ename">Shandler</div><div class="erole">Copy</div></div></div>
-      <div class="estats">
-        <div><div class="eads-label">Ads entregues</div><div class="evideos">10</div>
-          <div class="evideos-sub">de 10 planejados</div></div>
-        <div><div class="epct-val" style="color:#1D9E75;">100%</div><div class="epct-sub">cumprimento</div></div>
-      </div>
-      <div class="ebar-track"><div class="ebar-fill" style="width:100%;background:#1D9E75;"></div></div>
-    </div><div class="ecard">
-      <div class="ehead"><div class="eavatar" style="background:#c9a84c;color:#000;">LA</div>
-        <div><div class="ename">Lavínia</div><div class="erole">Copy</div></div></div>
-      <div class="estats">
-        <div><div class="eads-label">Ads entregues</div><div class="evideos">44</div>
-          <div class="evideos-sub">de 50 planejados</div></div>
-        <div><div class="epct-val" style="color:#1D9E75;">88%</div><div class="epct-sub">cumprimento</div></div>
-      </div>
-      <div class="ebar-track"><div class="ebar-fill" style="width:88%;background:#1D9E75;"></div></div>
-    </div><div class="ecard">
-      <div class="ehead"><div class="eavatar" style="background:#9b59b6;color:#fff;">BI</div>
-        <div><div class="ename">Bianca</div><div class="erole">Copy</div></div></div>
-      <div class="estats">
-        <div><div class="eads-label">Ads entregues</div><div class="evideos">70</div>
-          <div class="evideos-sub">de 70 planejados</div></div>
-        <div><div class="epct-val" style="color:#1D9E75;">100%</div><div class="epct-sub">cumprimento</div></div>
-      </div>
-      <div class="ebar-track"><div class="ebar-fill" style="width:100%;background:#1D9E75;"></div></div>
-    </div></div>
+  <div class="editors-grid-4"><div class="ecard"><div class="ehead"><div class="eavatar" style="background:#2a6fc4;color:#fff;">MI</div><div><div class="ename">Milena</div><div class="erole">Copy</div></div></div><div class="estats"><div><div class="eads-label">Entregues</div><div class="evideos">55</div><div class="evideos-sub">de 60 planejados</div></div><div><div class="epct-val" style="color:#1D9E75;">92%</div><div class="epct-sub">cumprimento</div></div></div><div class="ebar-track"><div class="ebar-fill" style="width:92%;background:#1D9E75;"></div></div></div><div class="ecard"><div class="ehead"><div class="eavatar" style="background:#1D9E75;color:#fff;">SH</div><div><div class="ename">Shandler</div><div class="erole">Copy</div></div></div><div class="estats"><div><div class="eads-label">Entregues</div><div class="evideos">10</div><div class="evideos-sub">de 10 planejados</div></div><div><div class="epct-val" style="color:#1D9E75;">100%</div><div class="epct-sub">cumprimento</div></div></div><div class="ebar-track"><div class="ebar-fill" style="width:100%;background:#1D9E75;"></div></div></div><div class="ecard"><div class="ehead"><div class="eavatar" style="background:#c9a84c;color:#000;">LA</div><div><div class="ename">Lavínia</div><div class="erole">Copy</div></div></div><div class="estats"><div><div class="eads-label">Entregues</div><div class="evideos">44</div><div class="evideos-sub">de 50 planejados</div></div><div><div class="epct-val" style="color:#1D9E75;">88%</div><div class="epct-sub">cumprimento</div></div></div><div class="ebar-track"><div class="ebar-fill" style="width:88%;background:#1D9E75;"></div></div></div><div class="ecard"><div class="ehead"><div class="eavatar" style="background:#9b59b6;color:#fff;">BI</div><div><div class="ename">Bianca</div><div class="erole">Copy</div></div></div><div class="estats"><div><div class="eads-label">Entregues</div><div class="evideos">70</div><div class="evideos-sub">de 70 planejados</div></div><div><div class="epct-val" style="color:#1D9E75;">100%</div><div class="epct-sub">cumprimento</div></div></div><div class="ebar-track"><div class="ebar-fill" style="width:100%;background:#1D9E75;"></div></div></div></div>
   <div class="chart-section">
-    <div class="sec-label" style="margin-bottom:16px;">Ads entregues por copywriter</div>
+    <div class="sec-label" style="margin-bottom:16px;">Entregues por copywriter</div>
     <div class="chart-wrap"><canvas id="copyChart"></canvas></div>
   </div>
 </div>
 
 <!-- ESTRATÉGICO -->
 <div class="page" id="page-estrategico">
-  <div class="placeholder">Em breve &middot; Estrat&eacute;gico</div>
+  <div class="placeholder" style="margin-top:24px;">Em breve &middot; Estrat&eacute;gico</div>
 </div>
 
 <!-- CS -->
 <div class="page" id="page-cs">
-  <div class="placeholder">Em breve &middot; CS</div>
+  <div class="placeholder" style="margin-top:24px;">Em breve &middot; CS</div>
 </div>
 
 <script>
 const SUPABASE_URL = "https://wlfrmnpntpnbjekwnvcs.supabase.co";
 const SUPABASE_KEY = "sb_publishable_CGieCLKqBEzElgBH9Y8QLg_UWKkLom-";
 
+// Editores por ID do ClickUp
 const EDITORS = [
-  { id: 82160031,  label: "Luan",       initials: "LU", color: "#2a6fc4" },
-  { id: 89397911,  label: "Malcom",     initials: "MA", color: "#c9a84c" },
-  { id: 170645656, label: "Gustavo T.", initials: "GT", color: "#2a6fc4" },
-  { id: 89297830,  label: "Victor Ravi",initials: "VR", color: "#9b59b6" },
-  { id: 89362557,  label: "Vitu",       initials: "VI", color: "#e74c3c" },
-  { id: 89133258,  label: "Thiago",     initials: "TH", color: "#1D9E75" },
+  { id: 82160031,  label: "Luan",        initials: "LU", color: "#2a6fc4" },
+  { id: 89397911,  label: "Malcom",      initials: "MA", color: "#c9a84c" },
+  { id: 170645656, label: "Gustavo T.",  initials: "GT", color: "#2a6fc4" },
+  { id: 89297830,  label: "Victor Ravi", initials: "VR", color: "#9b59b6" },
+  { id: 89362557,  label: "Vitu",        initials: "VI", color: "#e74c3c" },
+  { id: 89133258,  label: "Thiago",      initials: "TH", color: "#1D9E75" },
 ];
 
 let adsChartInstance = null;
 let currentSub = 'ads';
-
-function normalize(s) {
-  return (s||"").toLowerCase().normalize("NFD")
-    .replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
-}
 
 function pctColor(p) {
   if (p >= 80) return "#1D9E75";
@@ -265,72 +219,76 @@ function showPage(id) {
   if (el) el.classList.add('active');
 }
 
-function getEditorKey(assignees) {
-  let arr = assignees;
-  if (typeof arr === 'string') {
-    try { arr = JSON.parse(arr); } catch(e) { return null; }
+function parseAssignees(raw) {
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === 'string') {
+    try { return JSON.parse(raw); } catch(e) { return []; }
   }
-  if (!Array.isArray(arr)) return null;
+  return [];
+}
+
+function getEditorId(assignees) {
+  const arr = parseAssignees(assignees);
   for (const a of arr) {
+    const aid = Number(a.id);
     for (const ed of EDITORS) {
-      if (Number(a.id) === ed.id) return ed.id;
+      if (aid === ed.id) return ed.id;
     }
   }
   return null;
 }
 
 async function loadAds() {
+  const start = document.getElementById('dtStart').value;
+  const end   = document.getElementById('dtEnd').value;
+  const startMs = new Date(start + 'T00:00:00').getTime();
+  const endMs   = end ? new Date(end + 'T23:59:59').getTime() : Date.now();
+
   document.getElementById('adsLoading').style.display = 'block';
   document.getElementById('adsContent').style.display = 'none';
-  document.getElementById('adsError').style.display = 'none';
+  document.getElementById('adsError').style.display   = 'none';
 
   try {
-    const start = document.getElementById('dtStart').value;
-    const end   = document.getElementById('dtEnd').value;
-    const startMs = new Date(start + 'T00:00:00').getTime();
-    const endMs   = end ? new Date(end + 'T23:59:59').getTime() : Date.now();
-
-    // Busca tasks da lista Novos criativos com "criativo" no nome, filtradas por date_updated
     const url = SUPABASE_URL + "/rest/v1/tasks"
       + "?list_name=ilike.*novos%20criativos*"
       + "&name=ilike.*Criativos*"
       + "&date_updated=gte." + startMs
       + "&date_updated=lte." + endMs
-      + "&select=id,name,status,assignees,due_date,date_updated"
+      + "&select=id,name,status,assignees,date_updated"
       + "&limit=2000";
 
     const res = await fetch(url, {
       headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY }
     });
-
     if (!res.ok) throw new Error("HTTP " + res.status + ": " + await res.text());
     const tasks = await res.json();
 
     const total = tasks.length;
-    const done  = tasks.filter(t => normalize(t.status||"").includes("complete")).length;
+    const done  = tasks.filter(t => (t.status||"") === "complete").length;
     const pct   = total > 0 ? Math.round(done/total*100) : 0;
 
     document.getElementById('kpiTotal').textContent = total;
     document.getElementById('kpiDone').textContent  = done;
     document.getElementById('kpiPct').textContent   = pct + "%";
     document.getElementById('kpiPct').style.color   = pctColor(pct);
-    document.getElementById('mainBar').style.width   = pct + "%";
+    document.getElementById('mainBar').style.width      = pct + "%";
     document.getElementById('mainBar').style.background = pctColor(pct);
 
-    // Por editor
+    // Agrupa por editor
     const es = {};
     EDITORS.forEach(e => es[e.id] = {total:0, done:0});
     tasks.forEach(t => {
-      const k = getEditorKey(t.assignees);
-      if (k !== null && es[k] !== undefined) {
-        es[k].total++;
-        if (normalize(t.status||"").includes("complete")) es[k].done++;
+      const eid = getEditorId(t.assignees);
+      if (eid !== null && es[eid] !== undefined) {
+        es[eid].total++;
+        if ((t.status||"") === "complete") es[eid].done++;
       }
     });
 
-    document.getElementById('editorsGrid').innerHTML = EDITORS.map(ed => {
+    // Cards
+    const activeEditors = EDITORS.filter(e => es[e.id].total > 0);
+    document.getElementById('editorsGrid').innerHTML = activeEditors.map(ed => {
       const s = es[ed.id];
-      if (s.total === 0) return '';
       const p = Math.round(s.done/s.total*100);
       const col = pctColor(p);
       const tc = ed.color === "#c9a84c" ? "#000" : "#fff";
@@ -347,10 +305,9 @@ async function loadAds() {
         +'</div></div>'
         +'<div class="ebar-track"><div class="ebar-fill" style="width:'+p+'%;background:'+col+';"></div></div>'
         +'</div>';
-    }).filter(Boolean).join('');
+    }).join('');
 
     // Chart
-    const activeEditors = EDITORS.filter(e => es[e.id].total > 0);
     if (adsChartInstance) adsChartInstance.destroy();
     adsChartInstance = new Chart(document.getElementById('adsChart').getContext('2d'), {
       type:'bar',
@@ -371,11 +328,9 @@ async function loadAds() {
       }
     });
 
-    // Data label
     const latest = tasks.reduce((m,t)=>Math.max(m,t.date_updated||0),0);
-    document.getElementById('adsWeekLabel').textContent = total + " tasks encontradas";
-    if (latest) document.getElementById('syncInfo').textContent =
-      "Ultima sync ClickUp: " + new Date(latest).toLocaleString('pt-BR');
+    document.getElementById('syncInfo').textContent = total + " tasks encontradas" +
+      (latest ? " · sync: " + new Date(latest).toLocaleString('pt-BR') : "");
 
     document.getElementById('adsLoading').style.display = 'none';
     document.getElementById('adsContent').style.display = 'block';
@@ -383,38 +338,32 @@ async function loadAds() {
   } catch(e) {
     document.getElementById('adsLoading').style.display = 'none';
     const el = document.getElementById('adsError');
-    el.textContent = "Erro ao carregar: " + e.message;
+    el.textContent = "Erro: " + e.message;
     el.style.display = 'block';
     console.error(e);
   }
 }
 
 // Copy chart
-window.addEventListener('load', () => {
-  // Setar data final como hoje
-  const today = new Date();
-  const y = today.getFullYear();
-  const m = String(today.getMonth()+1).padStart(2,'0');
-  const d = String(today.getDate()).padStart(2,'0');
-  document.getElementById('dtEnd').value = y+'-'+m+'-'+d;
-
-  new Chart(document.getElementById('copyChart').getContext('2d'), {
-    type:'bar',
-    data:{ labels:['Milena', 'Shandler', 'Lavínia', 'Bianca'], datasets:[{ label:'Entregues', data:[55, 10, 44, 70],
-      backgroundColor:['#2a6fc4cc', '#1D9E75cc', '#c9a84ccc', '#9b59b6cc'], borderRadius:6, borderSkipped:false }] },
-    options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false},
-        tooltip:{backgroundColor:"#111",titleColor:"#fff",bodyColor:"#c9a84c",
-          borderColor:"rgba(255,255,255,.1)",borderWidth:1,callbacks:{label:c=>" "+c.parsed.y+" ads"}} },
-      scales:{
-        x:{grid:{display:false},ticks:{color:"rgba(255,255,255,.45)",font:{size:12,family:"Inter"}},border:{display:false}},
-        y:{grid:{color:"rgba(255,255,255,.05)"},ticks:{color:"rgba(255,255,255,.3)",font:{size:11,family:"Inter"}},border:{display:false},max:80}
-      }
+new Chart(document.getElementById('copyChart').getContext('2d'), {
+  type:'bar',
+  data:{ labels:['Milena', 'Shandler', 'Lavínia', 'Bianca'], datasets:[{ label:'Entregues', data:[55, 10, 44, 70],
+    backgroundColor:['#2a6fc4cc', '#1D9E75cc', '#c9a84ccc', '#9b59b6cc'], borderRadius:6, borderSkipped:false }] },
+  options:{ responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false},
+      tooltip:{backgroundColor:"#111",titleColor:"#fff",bodyColor:"#c9a84c",
+        borderColor:"rgba(255,255,255,.1)",borderWidth:1,callbacks:{label:c=>" "+c.parsed.y}} },
+    scales:{
+      x:{grid:{display:false},ticks:{color:"rgba(255,255,255,.45)",font:{size:12,family:"Inter"}},border:{display:false}},
+      y:{grid:{color:"rgba(255,255,255,.05)"},ticks:{color:"rgba(255,255,255,.3)",font:{size:11,family:"Inter"}},border:{display:false},max:80}
     }
-  });
-
-  loadAds();
+  }
 });
+
+// Init data final
+const today = new Date();
+document.getElementById('dtEnd').value = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+loadAds();
 </script>
 </body>
 </html>
