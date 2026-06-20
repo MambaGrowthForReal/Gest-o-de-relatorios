@@ -259,10 +259,14 @@ function showPage(id) {
 }
 
 function getEditorKey(assignees) {
-  if (!Array.isArray(assignees)) return null;
-  for (const a of assignees) {
+  let arr = assignees;
+  if (typeof arr === 'string') {
+    try { arr = JSON.parse(arr); } catch(e) { return null; }
+  }
+  if (!Array.isArray(arr)) return null;
+  for (const a of arr) {
     for (const ed of EDITORS) {
-      if (a.id === ed.id) return ed.id;
+      if (Number(a.id) === ed.id) return ed.id;
     }
   }
   return null;
