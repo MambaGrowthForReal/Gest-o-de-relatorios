@@ -53,6 +53,7 @@ def get_tasks_in_list(list_id, page=0):
         "page": page,
         "order_by": "updated",
         "reverse": "true",
+        "fields[]": "due_date",
     }
     r = requests.get(f"https://api.clickup.com/api/v2/list/{list_id}/task", headers=CLICKUP_HEADERS, params=params)
     r.raise_for_status()
