@@ -278,7 +278,7 @@ async function loadAds() {
     // Busca tasks da lista Novos criativos com "criativo" no nome
     const url = SUPABASE_URL + "/rest/v1/tasks"
       + "?list_name=ilike.*novos%20criativos*"
-      + "&name=ilike.*criativo*"
+      + "&name=ilike.*Criativos*"
       + "&select=id,name,status,assignees,due_date,date_updated"
       + "&limit=2000";
 
@@ -290,7 +290,7 @@ async function loadAds() {
     const tasks = await res.json();
 
     const total = tasks.length;
-    const done  = tasks.filter(t => normalize(t.status||"").includes("conclu")).length;
+    const done  = tasks.filter(t => normalize(t.status||"").includes("complete")).length;
     const pct   = total > 0 ? Math.round(done/total*100) : 0;
 
     document.getElementById('kpiTotal').textContent = total;
@@ -307,7 +307,7 @@ async function loadAds() {
       const k = getEditorKey(t.assignees);
       if (k && es[k]) {
         es[k].total++;
-        if (normalize(t.status||"").includes("conclu")) es[k].done++;
+        if (normalize(t.status||"").includes("complete")) es[k].done++;
       }
     });
 
