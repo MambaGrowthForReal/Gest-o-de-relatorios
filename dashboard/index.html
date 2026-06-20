@@ -266,8 +266,6 @@ async function loadAds() {
     const allTasks = await res.json();
 
     // Filtrar por data no JS usando date_updated (ms)
-    const startMs = new Date(start + 'T00:00:00').getTime();
-    const endMs   = new Date(endDate + 'T23:59:59').getTime();
     const tasks = allTasks.filter(t => {
       const upd = Number(t.date_updated);
       return upd >= startMs && upd <= endMs;
