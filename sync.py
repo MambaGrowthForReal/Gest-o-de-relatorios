@@ -100,12 +100,30 @@ def upsert_tasks(tasks):
     else:
         print(f"  ✅ {len(tasks)} tarefa(s) sincronizada(s)")
 
+# ── Busca task individual para pegar due_date ──────────────
+
+def get_task_due_date(task_id):
+    try:
+        r = requests.get(f"https://api.clickup.com/api/v2/task/{task_id}", headers=CLICKUP_HEADERS)
+        r.raise_for_status()
+        data = r.json()
+        ms = data.get("due_date")
+        if not ms:
+            return None
+        return datetime.fromtimestamp(int(ms) / 1000, tz=timezone.utc).isoformat()
+    except Exception as e:
+        print(f"  ⚠️  Erro ao buscar task {task_id}: {e}")
+        return None
+
 # ── Full sync ──────────────────────────────────────────────
 
 def full_sync():
     print(f"\n🔄 Iniciando sync — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     teams = get_teams()
     total = 0
+
+    # Calcula threshold de 7 dias atrás em ms
+    seven_days_ms = int((datetime.now(tz=timezone.utc).timestamp() - 7 * 86400) * 1000)
 
     for team in teams:
         spaces = get_spaces(team["id"])
@@ -117,10 +135,24 @@ def full_sync():
 
             for lst in lists:
                 lid, lname = lst["id"], lst["name"]
+                is_novos_criativos = "novos criativos" in lname.lower()
                 page = 0
                 while True:
                     tasks_raw, last_page = get_tasks_in_list(lid, page)
-                    parsed = [parse_task(t, sid, sname, lid, lname) for t in tasks_raw]
+                    parsed = []
+                    for t in tasks_raw:
+                        p = parse_task(t, sid, sname, lid, lname)
+                        # Para lista Novos criativos, busca due_date individual
+                        # apenas para tasks atualizadas nos últimos 7 dias
+                        if is_novos_criativos and p["due_date"] is None:
+                            date_updated_ms = int(t.get("date_updated", 0) or 0)
+                            if date_updated_ms >= seven_days_ms:
+                                due = get_task_due_date(t["id"])
+                                if due:
+                                    p["due_date"] = due
+                                    print(f"  📅 due_date recuperado: {t.get('name', '')[:40]}")
+                                time.sleep(0.5)
+                        parsed.append(p)
                     upsert_tasks(parsed)
                     total += len(parsed)
                     if last_page or not tasks_raw:
