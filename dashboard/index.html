@@ -176,6 +176,30 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
 </div>
 
 <script>
+let currentSub = 'ads';
+
+function selectMain(key, btn) {
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const sub = document.getElementById('navSub');
+  if (key === 'edicao') { sub.classList.add('visible'); showPage('page-' + currentSub); }
+  else { sub.classList.remove('visible'); showPage('page-' + key); }
+}
+
+function selectSub(key, btn) {
+  currentSub = key;
+  document.querySelectorAll('.nav-sub-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  showPage('page-' + key);
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+}
+
+
 const SUPABASE_URL = "https://wlfrmnpntpnbjekwnvcs.supabase.co";
 const SUPABASE_KEY = "sb_publishable_CGieCLKqBEzElgBH9Y8QLg_UWKkLom-";
 
