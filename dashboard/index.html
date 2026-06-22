@@ -98,28 +98,26 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
 <!-- ADS -->
 <div class="page active" id="page-ads">
   <div id="adsError" class="error-box" style="display:none;"></div>
-  <div id="adsLoading" class="loading">&#9881; Carregando dados...</div>
-  <div id="adsContent" style="display:none;">
+  <div id="adsContent">
     <div class="kpi-row">
       <div class="kpi"><div class="kpi-label">Criativos no per&iacute;odo</div>
-        <div class="kpi-value" id="kpiTotal">-</div><div class="kpi-sub">criativos (tasks &times; 5)</div></div>
+        <div class="kpi-value">415</div><div class="kpi-sub">criativos (tasks &times; 5)</div></div>
       <div class="kpi"><div class="kpi-label">Conclu&iacute;dos</div>
-        <div class="kpi-value" id="kpiDone">-</div><div class="kpi-sub">status conclu&iacute;do</div></div>
+        <div class="kpi-value">300</div><div class="kpi-sub">status conclu&iacute;do</div></div>
       <div class="kpi"><div class="kpi-label">Cumprimento Geral</div>
-        <div class="kpi-value" id="kpiPct">-</div>
-        <div class="pct-track"><div class="pct-fill" id="mainBar" style="width:0%"></div></div></div>
+        <div class="kpi-value" style="color:#c9a84c;">72%</div>
+        <div class="pct-track"><div class="pct-fill" style="width:72%;background:#c9a84c;"></div></div></div>
     </div>
     <div class="sec-label">Performance por Editor</div>
-    <div class="editors-grid" id="editorsGrid"></div>
+    <div class="editors-grid"><div class="ecard"><div class="ehead"><div class="eavatar" style="background:#9b59b6;color:#fff;">VR</div><div><div class="ename">Victor Ravi</div><div class="erole">Editor</div></div></div><div class="estats"><div><div class="eads-label">Criativos conclu&iacute;dos</div><div class="evideos">15</div><div class="evideos-sub">de 90 criativos</div></div><div><div class="epct-val" style="color:#e74c3c;">17%</div><div class="epct-sub">cumprimento</div></div></div><div class="ebar-track"><div class="ebar-fill" style="width:17%;background:#e74c3c;"></div></div></div><div class="ecard"><div class="ehead"><div class="eavatar" style="background:#2a6fc4;color:#fff;">LU</div><div><div class="ename">Luan</div><div class="erole">Editor</div></div></div><div class="estats"><div><div class="eads-label">Criativos conclu&iacute;dos</div><div class="evideos">85</div><div class="evideos-sub">de 85 criativos</div></div><div><div class="epct-val" style="color:#1D9E75;">100%</div><div class="epct-sub">cumprimento</div></div></div><div class="ebar-track"><div class="ebar-fill" style="width:100%;background:#1D9E75;"></div></div></div><div class="ecard"><div class="ehead"><div class="eavatar" style="background:#1D9E75;color:#fff;">GT</div><div><div class="ename">Gustavo T.</div><div class="erole">Editor</div></div></div><div class="estats"><div><div class="eads-label">Criativos conclu&iacute;dos</div><div class="evideos">75</div><div class="evideos-sub">de 90 criativos</div></div><div><div class="epct-val" style="color:#1D9E75;">83%</div><div class="epct-sub">cumprimento</div></div></div><div class="ebar-track"><div class="ebar-fill" style="width:83%;background:#1D9E75;"></div></div></div><div class="ecard"><div class="ehead"><div class="eavatar" style="background:#e74c3c;color:#fff;">VI</div><div><div class="ename">Vitu</div><div class="erole">Editor</div></div></div><div class="estats"><div><div class="eads-label">Criativos conclu&iacute;dos</div><div class="evideos">50</div><div class="evideos-sub">de 50 criativos</div></div><div><div class="epct-val" style="color:#1D9E75;">100%</div><div class="epct-sub">cumprimento</div></div></div><div class="ebar-track"><div class="ebar-fill" style="width:100%;background:#1D9E75;"></div></div></div><div class="ecard"><div class="ehead"><div class="eavatar" style="background:#c9a84c;color:#000;">MA</div><div><div class="ename">Malcom</div><div class="erole">Editor</div></div></div><div class="estats"><div><div class="eads-label">Criativos conclu&iacute;dos</div><div class="evideos">75</div><div class="evideos-sub">de 100 criativos</div></div><div><div class="epct-val" style="color:#c9a84c;">75%</div><div class="epct-sub">cumprimento</div></div></div><div class="ebar-track"><div class="ebar-fill" style="width:75%;background:#c9a84c;"></div></div></div></div>
     <div class="chart-section">
       <div class="sec-label" style="margin-bottom:16px;">Criativos conclu&iacute;dos por editor</div>
       <div class="chart-wrap"><canvas id="adsChart"></canvas></div>
     </div>
-    <div class="sync-info" id="syncInfo"></div>
   </div>
 </div>
 
-<!-- VSL -->
+<!-- VSL --><!-- VSL -->
 <div class="page" id="page-vsl">
   <div class="sec-label" style="margin-top:8px;">Performance por Editor</div>
   <div class="editors-grid-2" style="margin-top:14px;">
@@ -191,183 +189,20 @@ const EDITORS = [
   { id: 89133258,  label: "Thiago",      initials: "TH", color: "#1D9E75" },
 ];
 
-let adsChartInstance = null;
-let currentSub = 'ads';
-
-function pctColor(p) {
-  if (p >= 80) return "#1D9E75";
-  if (p >= 50) return "#c9a84c";
-  return "#e74c3c";
-}
-
-function selectMain(key, btn) {
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  const sub = document.getElementById('navSub');
-  if (key === 'edicao') { sub.classList.add('visible'); showPage('page-' + currentSub); }
-  else { sub.classList.remove('visible'); showPage('page-' + key); }
-}
-
-function selectSub(key, btn) {
-  currentSub = key;
-  document.querySelectorAll('.nav-sub-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  showPage('page-' + key);
-}
-
-function showPage(id) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  const el = document.getElementById(id);
-  if (el) el.classList.add('active');
-}
-
-function parseAssignees(raw) {
-  if (Array.isArray(raw)) return raw;
-  if (typeof raw === 'string') { try { return JSON.parse(raw); } catch(e) { return []; } }
-  return [];
-}
-
-function getEditorId(assignees) {
-  const arr = parseAssignees(assignees);
-  for (const a of arr) {
-    const aid = Number(a.id);
-    for (const ed of EDITORS) { if (aid === ed.id) return ed.id; }
-  }
-  return null;
-}
-
-async function loadAds() {
-  const start = document.getElementById('dtStart').value;
-  const end   = document.getElementById('dtEnd').value;
-  const startMs = new Date(start + 'T00:00:00').getTime();
-  const endMs   = new Date((end || new Date().toISOString().split('T')[0]) + 'T23:59:59').getTime();
-
-  document.getElementById('adsLoading').style.display = 'block';
-  document.getElementById('adsContent').style.display = 'none';
-  document.getElementById('adsError').style.display   = 'none';
-
-  try {
-    const url = SUPABASE_URL + "/rest/v1/tasks"
-      + "?list_name=ilike.*novos%20criativos*"
-      + "&name=ilike.*Criativos*"
-      + "&select=id,name,status,assignees,date_updated,due_date"
-      + "&limit=2000";
-
-    const res = await fetch(url, {
-      headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY }
-    });
-    if (!res.ok) throw new Error("HTTP " + res.status + ": " + await res.text());
-
-    const allTasks = await res.json();
-    // Filtrar por due_date no periodo (formato ISO string)
-    const tasks = allTasks.filter(t => {
-      if (!t.due_date) return false;
-      const due = new Date(t.due_date).getTime();
-      return due >= startMs && due <= endMs;
-    });
-
-    const totalTasks = tasks.length;
-    const doneTasks  = tasks.filter(t => (t.status||"") === "complete").length;
-    const total = totalTasks * 5;
-    const done  = doneTasks * 5;
-    const pct   = total > 0 ? Math.round(done/total*100) : 0;
-
-    document.getElementById('kpiTotal').textContent = total;
-    document.getElementById('kpiDone').textContent  = done;
-    document.getElementById('kpiPct').textContent   = pct + "%";
-    document.getElementById('kpiPct').style.color   = pctColor(pct);
-    document.getElementById('mainBar').style.width      = pct + "%";
-    document.getElementById('mainBar').style.background = pctColor(pct);
-
-    const es = {};
-    EDITORS.forEach(e => es[e.id] = {total:0, done:0});
-    tasks.forEach(t => {
-      const eid = getEditorId(t.assignees);
-      if (eid !== null && es[eid] !== undefined) {
-        es[eid].total++;
-        if ((t.status||"") === "complete") es[eid].done++;
-      }
-    });
-
-    const activeEditors = EDITORS.filter(e => es[e.id].total > 0);
-    document.getElementById('editorsGrid').innerHTML = activeEditors.map(ed => {
-      const s = es[ed.id];
-      const crDone  = s.done * 5;
-      const crTotal = s.total * 5;
-      const p = s.total > 0 ? Math.round(s.done/s.total*100) : 0;
-      const col = pctColor(p);
-      const tc = ed.color === "#c9a84c" ? "#000" : "#fff";
-      return '<div class="ecard">'
-        +'<div class="ehead"><div class="eavatar" style="background:'+ed.color+';color:'+tc+';">'+ed.initials+'</div>'
-        +'<div><div class="ename">'+ed.label+'</div><div class="erole">Editor</div></div></div>'
-        +'<div class="estats"><div>'
-        +'<div class="eads-label">Criativos conclu&iacute;dos</div>'
-        +'<div class="evideos">'+crDone+'</div>'
-        +'<div class="evideos-sub">de '+crTotal+' criativos</div>'
-        +'</div><div>'
-        +'<div class="epct-val" style="color:'+col+';">'+p+'%</div>'
-        +'<div class="epct-sub">cumprimento</div>'
-        +'</div></div>'
-        +'<div class="ebar-track"><div class="ebar-fill" style="width:'+p+'%;background:'+col+';"></div></div>'
-        +'</div>';
-    }).join('');
-
-    if (adsChartInstance) adsChartInstance.destroy();
-    if (activeEditors.length > 0) {
-      adsChartInstance = new Chart(document.getElementById('adsChart').getContext('2d'), {
-        type:'bar',
-        data:{
-          labels: activeEditors.map(e=>e.label),
-          datasets:[{ label:'Concluídos', data:activeEditors.map(e=>es[e.id].done),
-            backgroundColor:activeEditors.map(e=>e.color+'cc'), borderRadius:6, borderSkipped:false }]
-        },
-        options:{
-          responsive:true, maintainAspectRatio:false,
-          plugins:{ legend:{display:false},
-            tooltip:{backgroundColor:"#111",titleColor:"#fff",bodyColor:"#c9a84c",
-              borderColor:"rgba(255,255,255,.1)",borderWidth:1,callbacks:{label:c=>" "+c.parsed.y+" criativos"}} },
-          scales:{
-            x:{grid:{display:false},ticks:{color:"rgba(255,255,255,.45)",font:{size:12,family:"Inter"}},border:{display:false}},
-            y:{grid:{color:"rgba(255,255,255,.05)"},ticks:{color:"rgba(255,255,255,.3)",font:{size:11,family:"Inter"}},border:{display:false}}
-          }
-        }
-      });
-    }
-
-    const latest = tasks.reduce((m,t)=>Math.max(m,t.date_updated||0),0);
-    document.getElementById('syncInfo').textContent = total + " tasks no per&iacute;odo" +
-      (latest ? " · sync: " + new Date(latest).toLocaleString('pt-BR') : "");
-
-    document.getElementById('adsLoading').style.display = 'none';
-    document.getElementById('adsContent').style.display = 'block';
-
-  } catch(e) {
-    document.getElementById('adsLoading').style.display = 'none';
-    const el = document.getElementById('adsError');
-    el.textContent = "Erro: " + e.message;
-    el.style.display = 'block';
-    console.error(e);
-  }
-}
-
-new Chart(document.getElementById('copyChart').getContext('2d'), {
+new Chart(document.getElementById('adsChart').getContext('2d'), {
   type:'bar',
-  data:{ labels:['Bianca', 'Milena', 'Lavínia', 'Shandler'], datasets:[{ label:'Entregues', data:[25, 25, 15, 8],
-    backgroundColor:['#9b59b6cc', '#2a6fc4cc', '#c9a84ccc', '#1D9E75cc'], borderRadius:6, borderSkipped:false }] },
+  data:{ labels:['Victor Ravi', 'Luan', 'Gustavo T.', 'Vitu', 'Malcom'], datasets:[{ label:'Conclu&iacute;dos', data:[15, 85, 75, 50, 75],
+    backgroundColor:['#9b59b6cc', '#2a6fc4cc', '#1D9E75cc', '#e74c3ccc', '#c9a84ccc'], borderRadius:6, borderSkipped:false }] },
   options:{ responsive:true, maintainAspectRatio:false,
     plugins:{ legend:{display:false},
       tooltip:{backgroundColor:"#111",titleColor:"#fff",bodyColor:"#c9a84c",
-        borderColor:"rgba(255,255,255,.1)",borderWidth:1,callbacks:{label:c=>" "+c.parsed.y}} },
+        borderColor:"rgba(255,255,255,.1)",borderWidth:1,callbacks:{label:c=>" "+c.parsed.y+" criativos"}} },
     scales:{
       x:{grid:{display:false},ticks:{color:"rgba(255,255,255,.45)",font:{size:12,family:"Inter"}},border:{display:false}},
-      y:{grid:{color:"rgba(255,255,255,.05)"},ticks:{color:"rgba(255,255,255,.3)",font:{size:11,family:"Inter"}},border:{display:false},max:30}
+      y:{grid:{color:"rgba(255,255,255,.05)"},ticks:{color:"rgba(255,255,255,.3)",font:{size:11,family:"Inter"}},border:{display:false}}
     }
   }
 });
-
-const today = new Date();
-document.getElementById('dtEnd').value = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
-loadAds();
 </script>
 </body>
 </html>
