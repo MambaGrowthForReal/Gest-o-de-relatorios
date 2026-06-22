@@ -270,6 +270,28 @@ new Chart(document.getElementById('adsChart').getContext('2d'), {
     }
   }
 });
+
+function registerPlan() {
+  const text = document.getElementById('planText').value.trim();
+  if (!text) return;
+  const plans = JSON.parse(localStorage.getItem('copyPlans') || '[]');
+  plans.unshift({ date: new Date().toLocaleString('pt-BR'), text: text });
+  localStorage.setItem('copyPlans', JSON.stringify(plans.slice(0, 10)));
+  document.getElementById('planText').value = '';
+  document.getElementById('planSaved').textContent = 'Registrado em ' + plans[0].date;
+  loadPlanHistory();
+}
+
+function loadPlanHistory() {
+  const plans = JSON.parse(localStorage.getItem('copyPlans') || '[]');
+  const el = document.getElementById('planHistory');
+  if (!el) return;
+  el.innerHTML = plans.map(p =>
+    '<div class="plan-entry"><div class="plan-entry-date">' + p.date + '</div><div class="plan-entry-text">' + p.text + '</div></div>'
+  ).join('');
+}
+
+loadPlanHistory();
 </script>
 </body>
 </html>
