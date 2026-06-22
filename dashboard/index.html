@@ -65,6 +65,18 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
 .loading{text-align:center;padding:60px;color:rgba(255,255,255,.3);font-size:13px;}
 .error-box{color:#e74c3c;font-size:12px;padding:10px 14px;background:rgba(231,76,60,.1);border-radius:8px;margin-bottom:16px;border:1px solid rgba(231,76,60,.2);}
 .sync-info{font-size:11px;color:rgba(255,255,255,.2);text-align:right;margin-top:16px;}
+.plan-card{background:#0d0d0d;border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:20px;margin-top:16px;}
+.plan-card h3{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.28);margin-bottom:14px;}
+.plan-textarea{width:100%;background:#070707;border:1px solid rgba(255,255,255,.1);color:#fff;font-size:13px;font-family:Inter,sans-serif;padding:12px 14px;border-radius:8px;resize:vertical;min-height:100px;outline:none;line-height:1.6;}
+.plan-textarea::placeholder{color:rgba(255,255,255,.2);}
+.plan-footer{display:flex;justify-content:space-between;align-items:center;margin-top:10px;}
+.plan-saved{font-size:11px;color:rgba(255,255,255,.25);}
+.btn-register{background:#2a6fc4;color:#fff;border:none;font-size:12px;font-weight:500;font-family:Inter,sans-serif;padding:8px 20px;border-radius:7px;cursor:pointer;}
+.btn-register:hover{background:#1d5ba8;}
+.plan-history{margin-top:14px;display:flex;flex-direction:column;gap:8px;}
+.plan-entry{background:#111;border:1px solid rgba(255,255,255,.05);border-radius:8px;padding:10px 14px;}
+.plan-entry-date{font-size:10px;color:rgba(255,255,255,.3);margin-bottom:4px;}
+.plan-entry-text{font-size:12px;color:rgba(255,255,255,.7);line-height:1.5;}
 </style>
 </head>
 <body>
@@ -162,6 +174,16 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
   <div class="chart-section">
     <div class="sec-label" style="margin-bottom:16px;">Entregues por copywriter</div>
     <div class="chart-wrap"><canvas id="copyChart"></canvas></div>
+  </div>
+
+  <div class="plan-card">
+    <h3>Planejamento da Semana</h3>
+    <textarea class="plan-textarea" id="planText" placeholder="Digite aqui o planejamento da semana..."></textarea>
+    <div class="plan-footer">
+      <span class="plan-saved" id="planSaved"></span>
+      <button class="btn-register" onclick="registerPlan()">Registrar</button>
+    </div>
+    <div class="plan-history" id="planHistory"></div>
   </div>
 </div>
 
