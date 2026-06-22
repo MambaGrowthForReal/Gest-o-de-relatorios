@@ -3,7 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <title>Gestão Operacional · Mamba Growth</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js">
+function registerPlan() {
+  const text = document.getElementById('planText').value.trim();
+  if (!text) return;
+  const plans = JSON.parse(localStorage.getItem('copyPlans') || '[]');
+  plans.unshift({ date: new Date().toLocaleString('pt-BR'), text: text });
+  localStorage.setItem('copyPlans', JSON.stringify(plans.slice(0, 10)));
+  document.getElementById('planText').value = '';
+  document.getElementById('planSaved').textContent = 'Registrado em ' + plans[0].date;
+  loadPlanHistory();
+}
+
+function loadPlanHistory() {
+  const plans = JSON.parse(localStorage.getItem('copyPlans') || '[]');
+  const el = document.getElementById('planHistory');
+  if (!el) return;
+  el.innerHTML = plans.map(p =>
+    '<div class="plan-entry"><div class="plan-entry-date">' + p.date + '</div><div class="plan-entry-text">' + p.text + '</div></div>'
+  ).join('');
+}
+
+loadPlanHistory();
+</script>
 <style>
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 *{box-sizing:border-box;margin:0;padding:0;}
