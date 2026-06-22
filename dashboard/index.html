@@ -99,6 +99,18 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
 .plan-entry{background:#111;border:1px solid rgba(255,255,255,.05);border-radius:8px;padding:10px 14px;}
 .plan-entry-date{font-size:10px;color:rgba(255,255,255,.3);margin-bottom:4px;}
 .plan-entry-text{font-size:12px;color:rgba(255,255,255,.7);line-height:1.5;}
+
+.strat-table-wrap{margin-top:14px;overflow-x:auto;}
+.strat-table{width:100%;border-collapse:collapse;font-size:13px;}
+.strat-table th{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.3);padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.07);text-align:left;}
+.strat-table td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.04);color:rgba(255,255,255,.8);vertical-align:top;}
+.strat-table tr:hover td{background:rgba(255,255,255,.02);}
+.strat-data{color:rgba(255,255,255,.35);font-size:11px;white-space:nowrap;}
+.strat-avatar{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:10px;font-weight:700;color:#fff;margin-right:8px;vertical-align:middle;}
+.strat-tag{font-size:10px;font-weight:500;padding:3px 10px;border-radius:20px;}
+.strat-tag.andamento{background:rgba(201,168,76,.15);color:#c9a84c;}
+.strat-tag.concluido{background:rgba(29,158,117,.15);color:#1D9E75;}
+.strat-obs{font-size:11px;color:rgba(255,255,255,.35);margin-top:4px;line-height:1.4;}
 </style>
 </head>
 <body>
@@ -190,12 +202,50 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
   </div>
 </div>
 
-<!-- ESTRATÉGICO --><!-- ESTRATÉGICO -->
+<!-- ESTRATÉGICO -->
 <div class="page" id="page-estrategico">
-  <div class="placeholder" style="margin-top:8px;">Em breve &middot; Estrat&eacute;gico</div>
+  <div class="sec-label" style="margin-top:8px;">Demandas Estrat&eacute;gicas</div>
+  <div class="strat-table-wrap">
+    <table class="strat-table">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Respons&aacute;vel</th>
+          <th>Tarefa</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody><tr>
+      <td class="strat-data">11/05/2026</td>
+      <td><span class="strat-avatar" style="background:#e74c3c">NI</span>Nicollas</td>
+      <td>Nova Oferta de Vis&atilde;o - VisiumClean</td>
+      <td><span class="strat-tag andamento">Em andamento</span></td>
+    </tr><tr>
+      <td class="strat-data">15/06/2026</td>
+      <td><span class="strat-avatar" style="background:#2a6fc4">GU</span>Gustavo</td>
+      <td>Melhoria na automa&ccedil;&atilde;o</td>
+      <td><span class="strat-tag andamento">Em andamento</span></td>
+    </tr><tr>
+      <td class="strat-data">08/06/2026</td>
+      <td><span class="strat-avatar" style="background:#9b59b6">PE</span>Pedro</td>
+      <td>4 BM&apos;s<div class="strat-obs">Conseguimos 2 - Tarefa segue em andamento</div></td>
+      <td><span class="strat-tag andamento">Em andamento</span></td>
+    </tr><tr>
+      <td class="strat-data">08/06/2026</td>
+      <td><span class="strat-avatar" style="background:#1D9E75">SH</span>Shandler</td>
+      <td>Analisar ads do GEL 2<div class="strat-obs">Testar teoria do mecanismo e ceticismo do mercado (pausado - paramos os testes)</div></td>
+      <td><span class="strat-tag andamento">Em andamento</span></td>
+    </tr><tr>
+      <td class="strat-data">27/04/2026</td>
+      <td><span class="strat-avatar" style="background:#1D9E75">SH</span>Shandler</td>
+      <td>Testes de varia&ccedil;&otilde;es de criativos<div class="strat-obs">Iríamos testar volume maior de ADS mas pausamos os testes</div></td>
+      <td><span class="strat-tag andamento">Em andamento</span></td>
+    </tr></tbody>
+    </table>
+  </div>
 </div>
 
-<!-- CS -->
+<!-- CS --><!-- CS -->
 <div class="page" id="page-cs">
   <div class="placeholder" style="margin-top:8px;">Em breve &middot; CS</div>
 </div>
