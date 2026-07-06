@@ -262,6 +262,8 @@ function selectSub(key, btn) {
   document.querySelectorAll('.nav-sub-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   showPage('page-' + key);
+  if (key === 'vsl') loadVSL();
+  if (key === 'ads') loadAds();
 }
 
 function showPage(id) {
