@@ -426,8 +426,8 @@ async function loadVSL() {
   const leads = thiagoTasks.filter(t => t.name.toLowerCase().includes('lead'));
   const microleads = thiagoTasks.filter(t => t.name.toLowerCase().includes('microlead'));
 
-  const leadsCompletos = leads.filter(t => t.status === 'complete').length;
-  const microleadsCompletos = microleads.filter(t => t.status === 'complete').length;
+  const leadsCompletos = leads.filter(t => t.status === 'disponivel para teste').length;
+  const microleadsCompletos = microleads.filter(t => t.status === 'disponivel para teste').length;
 
   // Renderizar
   const container = document.querySelector('.vsl-items');
