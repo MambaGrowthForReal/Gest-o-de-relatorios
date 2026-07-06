@@ -417,16 +417,9 @@ async function loadVSL() {
     return;
   }
 
-  // Filtrar tasks de Thiago
-  const thiagoTasks = tasks.filter(t => {
-    let ass = [];
-    try { ass = JSON.parse(t.assignees || '[]'); } catch (e) {}
-    return ass.some(a => a.id === VSL_EDITOR_ID);
-  });
-
-  // Separar Lead vs Microlead
-  const leads = thiagoTasks.filter(t => t.name.toLowerCase().includes('lead'));
-  const microleads = thiagoTasks.filter(t => t.name.toLowerCase().includes('microlead'));
+  // Separar Lead vs Microlead (todas as tasks, sem filtro por assignee)
+  const leads = tasks.filter(t => t.name.toLowerCase().includes('lead') && !t.name.toLowerCase().includes('microlead'));
+  const microleads = tasks.filter(t => t.name.toLowerCase().includes('microlead'));
 
   const leadsCompletos = leads.filter(t => t.status === 'disponivel para teste').length;
   const microleadsCompletos = microleads.filter(t => t.status === 'disponivel para teste').length;
