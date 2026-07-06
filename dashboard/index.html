@@ -417,27 +417,59 @@ async function loadVSL() {
     return;
   }
 
-  // Separar Lead vs Microlead (todas as tasks, sem filtro por assignee)
-  const leads = tasks.filter(t => t.name.toLowerCase().includes('lead') && !t.name.toLowerCase().includes('microlead'));
-  const microleads = tasks.filter(t => t.name.toLowerCase().includes('microlead'));
+  // Montar mapa de pessoas que têm tasks no período
+  const pessoaMap = {};
+  tasks.forEach(t => {
+    let ass = [];
+    try { ass = JSON.parse(t.assignees || '[]'); } catch(e) {}
+    ass.forEach(a => {
+      if (!pessoaMap[a.id]) pessoaMap[a.id] = { id: a.id, username: a.username, leads: [], microleads: [] };
+      if (t.name.toLowerCase().includes('microlead')) {
+        pessoaMap[a.id].microleads.push(t);
+      } else if (t.name.toLowerCase().includes('lead')) {
+        pessoaMap[a.id].leads.push(t);
+      }
+    });
+  });
 
-  const leadsCompletos = leads.filter(t => t.status === 'disponivel para teste').length;
-  const microleadsCompletos = microleads.filter(t => t.status === 'disponivel para teste').length;
+  const pessoas = Object.values(pessoaMap).filter(p => p.leads.length > 0 || p.microleads.length > 0);
 
-  // Renderizar
-  const container = document.querySelector('.vsl-items');
-  if (!container) return;
+  // Renderizar um card por pessoa
+  const grid = document.querySelector('.editors-grid-2');
+  if (!grid) return;
 
-  container.innerHTML = `
-    <div class="vsl-item">
-      <span class="vsl-tipo">${leads.length} Lead${leads.length !== 1 ? 's' : ''}</span>
-      <span class="vsl-status" style="background:rgba(45, 158, 117, .15);color:#1D9E75;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:500;">${leadsCompletos}/${leads.length} completo${leads.length !== 1 ? 's' : ''}</span>
-    </div>
-    <div class="vsl-item">
-      <span class="vsl-tipo">${microleads.length} Microlead${microleads.length !== 1 ? 's' : ''}</span>
-      <span class="vsl-status" style="background:rgba(201, 168, 76, .15);color:#c9a84c;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:500;">${microleadsCompletos}/${microleads.length} completo${microleads.length !== 1 ? 's' : ''}</span>
-    </div>
-  `;
+  if (pessoas.length === 0) {
+    grid.innerHTML = '<div class="sec-label">Nenhuma task com vencimento nesse período.</div>';
+    return;
+  }
+
+  grid.innerHTML = pessoas.map(p => {
+    const initials = p.username.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
+    const leadsTotal = p.leads.length;
+    const leadsCompletos = p.leads.filter(t => t.status === 'disponivel para teste').length;
+    const microleadsTotal = p.microleads.length;
+    const microleadsCompletos = p.microleads.filter(t => t.status === 'disponivel para teste').length;
+
+    const itens = [];
+    if (leadsTotal > 0) itens.push(`
+      <div class="vsl-item">
+        <span class="vsl-tipo">${leadsTotal} Lead${leadsTotal !== 1 ? 's' : ''}</span>
+        <span class="vsl-status" style="background:rgba(45,158,117,.15);color:#1D9E75;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:500;">${leadsCompletos}/${leadsTotal} concluído${leadsTotal !== 1 ? 's' : ''}</span>
+      </div>`);
+    if (microleadsTotal > 0) itens.push(`
+      <div class="vsl-item">
+        <span class="vsl-tipo">${microleadsTotal} Microlead${microleadsTotal !== 1 ? 's' : ''}</span>
+        <span class="vsl-status" style="background:rgba(201,168,76,.15);color:#c9a84c;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:500;">${microleadsCompletos}/${microleadsTotal} concluído${microleadsTotal !== 1 ? 's' : ''}</span>
+      </div>`);
+
+    return `<div class="ecard">
+      <div class="ehead">
+        <div class="eavatar" style="background:#2a6fc4;color:#fff;">${initials}</div>
+        <div><div class="ename">${p.username}</div><div class="erole">Editor VSL</div></div>
+      </div>
+      <div class="vsl-items">${itens.join('')}</div>
+    </div>`;
+  }).join('');
 }
 
 const COPY_EDITOR_IDS = [95254856, 89138661, 236447148, 89362036, 81795840]; // Milena, Shandler, Lavínia, Bianca, Nicollas
