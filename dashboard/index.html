@@ -390,7 +390,12 @@ async function loadAds() {
 loadAds();
 
 const VSL_LIST_ID = '901702493697';
-const VSL_EDITOR_ID = 89133258; // Thiago
+const VSL_EDITORS = [
+  { id: 89133258, label: "Thiago",    initials: "TH", color: "#2a6fc4" },
+  { id: 89297830, label: "Victor Ravi", initials: "VR", color: "#1D9E75" },
+  { id: 82160031, label: "Luan",      initials: "LU", color: "#c9a84c" },
+  { id: 89362557, label: "Vitu",      initials: "VI", color: "#9b59b6" },
+];
 
 async function loadVSL() {
   const dtStartEl = document.getElementById('dtStart');
@@ -417,13 +422,15 @@ async function loadVSL() {
     return;
   }
 
-  // Montar mapa de pessoas que têm tasks no período
+  // Montar cards apenas para os editores VSL definidos
   const pessoaMap = {};
   tasks.forEach(t => {
     let ass = [];
     try { ass = JSON.parse(t.assignees || '[]'); } catch(e) {}
     ass.forEach(a => {
-      if (!pessoaMap[a.id]) pessoaMap[a.id] = { id: a.id, username: a.username, leads: [], microleads: [] };
+      const editor = VSL_EDITORS.find(e => e.id === a.id);
+      if (!editor) return;
+      if (!pessoaMap[a.id]) pessoaMap[a.id] = { ...editor, leads: [], microleads: [] };
       if (t.name.toLowerCase().includes('microlead')) {
         pessoaMap[a.id].microleads.push(t);
       } else if (t.name.toLowerCase().includes('lead')) {
@@ -444,7 +451,6 @@ async function loadVSL() {
   }
 
   grid.innerHTML = pessoas.map(p => {
-    const initials = p.username.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
     const leadsTotal = p.leads.length;
     const leadsCompletos = p.leads.filter(t => t.status === 'disponivel para teste').length;
     const microleadsTotal = p.microleads.length;
@@ -464,8 +470,8 @@ async function loadVSL() {
 
     return `<div class="ecard">
       <div class="ehead">
-        <div class="eavatar" style="background:#2a6fc4;color:#fff;">${initials}</div>
-        <div><div class="ename">${p.username}</div><div class="erole">Editor VSL</div></div>
+        <div class="eavatar" style="background:${p.color};color:#fff;">${p.initials}</div>
+        <div><div class="ename">${p.label}</div><div class="erole">Editor VSL</div></div>
       </div>
       <div class="vsl-items">${itens.join('')}</div>
     </div>`;
