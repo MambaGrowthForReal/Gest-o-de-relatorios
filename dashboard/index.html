@@ -329,7 +329,8 @@ async function loadAds() {
 
   let tasks = [];
   try {
-    const url = SUPABASE_URL + "/rest/v1/tasks?list_id=eq." + NOVOS_CRIATIVOS_LIST_ID
+    const url = SUPABASE_URL + "/rest/v1/tasks?apikey=" + SUPABASE_KEY
+      + "&list_id=eq." + NOVOS_CRIATIVOS_LIST_ID
       + "&due_date=gte." + startISO + "&due_date=lte." + endISO
       + "&select=id,name,status,assignees,due_date";
     const r = await fetch(url, { headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY } });
