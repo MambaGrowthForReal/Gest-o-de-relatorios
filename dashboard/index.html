@@ -189,19 +189,23 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
 
 <!-- ESTRATÉGICO --><!-- ESTRATÉGICO -->
 <div class="page" id="page-estrategico">
-  <div class="sec-label" style="margin-top:8px;">Demandas Estrat&eacute;gicas</div>
-  <div class="strat-table-wrap">
-    <table class="strat-table">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;margin-bottom:12px;">
+    <div class="sec-label">Demandas Estrat&eacute;gicas</div>
+    <input id="estrategicoFiltro" type="text" placeholder="Filtrar por responsável..." onkeyup="renderEstrategico()" style="background:#0f1923;border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;font-size:12px;padding:6px 12px;width:220px;outline:none;">
+  </div>
+  <div class="strat-table-wrap" style="max-height:calc(100vh - 180px);overflow-y:auto;">
+    <table class="strat-table" style="width:100%;">
       <thead>
         <tr>
-          <th>Data</th>
           <th>Respons&aacute;vel</th>
           <th>Tarefa</th>
           <th>Status</th>
+          <th>In&iacute;cio</th>
+          <th>Vencimento</th>
         </tr>
       </thead>
       <tbody id="estrategicoBody">
-        <tr><td colspan="4" style="text-align:center;color:rgba(255,255,255,.3);padding:20px;">Nenhuma demanda cadastrada.</td></tr>
+        <tr><td colspan="5" style="text-align:center;color:rgba(255,255,255,.3);padding:20px;">Carregando...</td></tr>
       </tbody>
     </table>
   </div>
@@ -291,6 +295,7 @@ function selectMain(key, btn) {
   const sub = document.getElementById('navSub');
   if (key === 'edicao') { sub.classList.add('visible'); showPage('page-' + currentSub); }
   else { sub.classList.remove('visible'); showPage('page-' + key); }
+  if (key === 'estrategico') loadEstrategico();
 }
 
 function selectSub(key, btn) {
@@ -801,6 +806,81 @@ async function loadPlanHistory() {
 }
 
 loadPlanHistory();
-</script>
-</body>
-</html>
+
+// ── Estratégico ────────────────────────────────────────────
+const ESTRATEGICO_LIST_ID = '901712343657';
+let estrategicoTasks = [];
+
+async function loadEstrategico() {
+  const body = document.getElementById('estrategicoBody');
+  if (!body) return;
+  body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:rgba(255,255,255,.3);padding:20px;">Carregando...</td></tr>';
+  try {
+    const url = SUPABASE_URL + "/rest/v1/tasks?apikey=" + SUPABASE_KEY
+      + "&list_id=eq." + ESTRATEGICO_LIST_ID
+      + "&select=id,name,status,assignees,start_date,due_date&limit=1000";
+    const r = await fetch(url, { headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY } });
+    estrategicoTasks = await r.json();
+    renderEstrategico();
+  } catch(e) {
+    body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#e74c3c;padding:20px;">Erro ao carregar dados.</td></tr>';
+    console.error(e);
+  }
+}
+
+function renderEstrategico() {
+  const body = document.getElementById('estrategicoBody');
+  if (!body) return;
+  const filtro = (document.getElementById('estrategicoFiltro')?.value || '').toLowerCase();
+
+  const statusTag = s => {
+    const sl = (s || '').toLowerCase();
+    let bg = 'rgba(255,255,255,.08)', color = '#aaa';
+    if (sl === 'concluído' || sl === 'concluido') { bg = 'rgba(29,158,117,.15)'; color = '#1D9E75'; }
+    else if (sl === 'em andamento') { bg = 'rgba(201,168,76,.15)'; color = '#c9a84c'; }
+    else if (sl === 'pendente') { bg = 'rgba(231,76,60,.15)'; color = '#e74c3c'; }
+    else if (sl === 'aguardando') { bg = 'rgba(42,111,196,.15)'; color = '#2a6fc4'; }
+    return `<span style="background:${bg};color:${color};padding:2px 10px;border-radius:20px;font-size:10px;font-weight:500;">${s || '—'}</span>`;
+  };
+
+  const fmtDate = iso => {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString('pt-BR');
+  };
+
+  const getAssignees = t => {
+    let ass = [];
+    try { ass = JSON.parse(t.assignees || '[]'); } catch(e) {}
+    return ass.map(a => a.username || '').filter(Boolean);
+  };
+
+  let tasks = estrategicoTasks.filter(t => {
+    if (!filtro) return true;
+    return getAssignees(t).join(' ').toLowerCase().includes(filtro);
+  });
+
+  const concluidas = ['concluído', 'concluido', 'closed'];
+  tasks.sort((a, b) => {
+    const aC = concluidas.includes((a.status || '').toLowerCase()) ? 1 : 0;
+    const bC = concluidas.includes((b.status || '').toLowerCase()) ? 1 : 0;
+    return aC - bC;
+  });
+
+  if (tasks.length === 0) {
+    body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:rgba(255,255,255,.3);padding:20px;">Nenhuma demanda encontrada.</td></tr>';
+    return;
+  }
+
+  body.innerHTML = tasks.map(t => {
+    const names = getAssignees(t);
+    const initials = names.map(n => n.split(' ').map(x => x[0]).join('').substring(0,2).toUpperCase()).join(', ');
+    const isConcluida = concluidas.includes((t.status || '').toLowerCase());
+    return `<tr style="${isConcluida ? 'opacity:0.5;' : ''}">
+      <td><span class="strat-avatar" style="background:#2a6fc4;">${initials || '?'}</span>${names.join(', ') || '—'}</td>
+      <td>${t.name || '—'}</td>
+      <td>${statusTag(t.status)}</td>
+      <td class="strat-data">${fmtDate(t.start_date)}</td>
+      <td class="strat-data">${fmtDate(t.due_date)}</td>
+    </tr>`;
+  }).join('');
+}
