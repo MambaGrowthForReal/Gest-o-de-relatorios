@@ -835,12 +835,23 @@ function renderEstrategico() {
 
   const statusTag = s => {
     const sl = (s || '').toLowerCase();
-    let bg = 'rgba(255,255,255,.08)', color = '#aaa';
-    if (sl === 'concluído' || sl === 'concluido') { bg = 'rgba(29,158,117,.15)'; color = '#1D9E75'; }
-    else if (sl === 'em andamento') { bg = 'rgba(201,168,76,.15)'; color = '#c9a84c'; }
-    else if (sl === 'pendente') { bg = 'rgba(231,76,60,.15)'; color = '#e74c3c'; }
-    else if (sl === 'aguardando') { bg = 'rgba(42,111,196,.15)'; color = '#2a6fc4'; }
-    return `<span style="background:${bg};color:${color};padding:2px 10px;border-radius:20px;font-size:10px;font-weight:500;">${s || '—'}</span>`;
+    let bg, color;
+    if (sl === 'concluído' || sl === 'concluido' || sl === 'complete' || sl === 'closed') {
+      bg = 'rgba(29,158,117,.15)'; color = '#1D9E75';
+    } else if (sl === 'em andamento') {
+      bg = 'rgba(201,168,76,.15)'; color = '#c9a84c';
+    } else if (sl === 'pendente') {
+      bg = 'rgba(231,76,60,.15)'; color = '#e74c3c';
+    } else if (sl === 'aguardando') {
+      bg = 'rgba(42,111,196,.15)'; color = '#2a6fc4';
+    } else if (sl === 'backlog') {
+      bg = 'rgba(155,89,182,.15)'; color = '#9b59b6';
+    } else if (sl === 'não iniciado' || sl === 'nao iniciado') {
+      bg = 'rgba(255,255,255,.08)'; color = '#888';
+    } else {
+      bg = 'rgba(255,255,255,.08)'; color = '#aaa';
+    }
+    return `<span style="background:${bg};color:${color};padding:3px 10px;border-radius:20px;font-size:10px;font-weight:500;white-space:nowrap;">${s || '—'}</span>`;
   };
 
   const fmtDate = iso => {
@@ -854,30 +865,35 @@ function renderEstrategico() {
     return ass.map(a => a.username || '').filter(Boolean);
   };
 
+  const statusOrder = s => {
+    const sl = (s || '').toLowerCase();
+    if (sl === 'em andamento') return 0;
+    if (sl === 'pendente') return 1;
+    if (sl === 'não iniciado' || sl === 'nao iniciado') return 2;
+    if (sl === 'aguardando') return 3;
+    if (sl === 'backlog') return 4;
+    return 5; // concluído/complete/closed
+  };
+
   let tasks = estrategicoTasks.filter(t => {
     if (!filtro) return true;
     return getAssignees(t).join(' ').toLowerCase().includes(filtro);
   });
 
-  const concluidas = ['concluído', 'concluido', 'closed'];
-  tasks.sort((a, b) => {
-    const aC = concluidas.includes((a.status || '').toLowerCase()) ? 1 : 0;
-    const bC = concluidas.includes((b.status || '').toLowerCase()) ? 1 : 0;
-    return aC - bC;
-  });
+  tasks.sort((a, b) => statusOrder(a.status) - statusOrder(b.status));
 
   if (tasks.length === 0) {
     body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:rgba(255,255,255,.3);padding:20px;">Nenhuma demanda encontrada.</td></tr>';
     return;
   }
 
+  const concluidas = ['concluído', 'concluido', 'complete', 'closed'];
   body.innerHTML = tasks.map(t => {
     const names = getAssignees(t);
-    const initials = names.map(n => n.split(' ').map(x => x[0]).join('').substring(0,2).toUpperCase()).join(', ');
     const isConcluida = concluidas.includes((t.status || '').toLowerCase());
-    return `<tr style="${isConcluida ? 'opacity:0.5;' : ''}">
-      <td><span class="strat-avatar" style="background:#2a6fc4;">${initials || '?'}</span>${names.join(', ') || '—'}</td>
-      <td>${t.name || '—'}</td>
+    return `<tr style="${isConcluida ? 'opacity:0.45;' : ''}">
+      <td style="font-size:12px;color:${isConcluida ? 'rgba(255,255,255,.5)' : '#fff'};">${names.join(', ') || '—'}</td>
+      <td style="font-size:12px;color:${isConcluida ? 'rgba(255,255,255,.5)' : '#fff'};">${t.name || '—'}</td>
       <td>${statusTag(t.status)}</td>
       <td class="strat-data">${fmtDate(t.start_date)}</td>
       <td class="strat-data">${fmtDate(t.due_date)}</td>
