@@ -362,8 +362,9 @@ function selectMain(key, btn) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   const sub = document.getElementById('navSub');
-  if (key === 'edicao') { sub.classList.add('visible'); showPage('page-' + currentSub); }
+  if (key === 'edicao') { sub.classList.add('visible'); showPage('page-' + currentSub); if (currentSub === 'vsl') loadVSL(); else loadAds(); }
   else { sub.classList.remove('visible'); showPage('page-' + key); }
+  if (key === 'copy') loadCopy();
   if (key === 'estrategico') loadEstrategico();
   if (key === 'otimizacao') loadOtimizacao();
 }
@@ -679,21 +680,12 @@ const COPY_EDITOR_IDS = [95254856, 89138661, 236447148, 89362036, 81795840]; // 
 const SHANDLER_ID = 89138661;
 
 function applyFilter() {
-  const activePage = document.querySelector('.page.active');
-  if (!activePage) {
-    loadAds();
-    return;
-  }
-  const pageId = activePage.id || '';
-  if (pageId.includes('copy')) {
-    loadCopy();
-  } else if (pageId.includes('vsl')) {
-    loadVSL();
-  } else if (pageId.includes('otimizacao')) {
-    loadOtimizacao();
-  } else {
-    loadAds();
-  }
+  loadAds();
+  loadVSL();
+  loadCopy();
+  loadEstrategico();
+  loadOtimizacao();
+}
 }
 
 const COPY_EDITORS = [
