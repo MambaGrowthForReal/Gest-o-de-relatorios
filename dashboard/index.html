@@ -983,10 +983,8 @@ async function loadOtimizacao() {
 
     let url = SUPABASE_URL + "/rest/v1/tasks?apikey=" + SUPABASE_KEY
       + "&list_id=eq." + OTIM_LIST_ID
-      + "&select=id,name,status,tags,due_date"
+      + "&select=id,name,status,tags,date_updated,synced_at"
       + "&limit=1000";
-    if (startISO) url += "&due_date=gte." + startISO;
-    url += "&due_date=lte." + endISO;
 
     const [rTasks, rComents] = await Promise.all([
       fetch(url, { headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY } }),
@@ -997,7 +995,17 @@ async function loadOtimizacao() {
     otimComentarios = await rComents.json();
 
     // Filtrar apenas os 3 status relevantes
-    tasks = tasks.filter(t => OTIM_STATUS.includes((t.status || '').toLowerCase()));
+    const agora = new Date();
+    const oitoDias = 8 * 24 * 60 * 60 * 1000;
+    tasks = tasks.filter(t => {
+      const sl = (t.status || '').toLowerCase();
+      if (sl === 'disponível para teste' || sl === 'disponivel para teste' || sl === 'testando') return true;
+      if (sl === 'teste concluído' || sl === 'teste concluido') {
+        const updated = new Date(t.date_updated || t.synced_at);
+        return (agora - updated) <= oitoDias;
+      }
+      return false;
+    });
 
     if (tasks.length === 0) {
       grid.innerHTML = '<div style="color:rgba(255,255,255,.3);font-size:13px;">Nenhuma task no período.</div>';
