@@ -5,9 +5,9 @@ import requests
 from datetime import datetime, timezone
 
 # ── Configurações ──────────────────────────────────────────
-CLICKUP_TOKEN = os.getenv("CLICKUP_TOKEN", "pk_206504924_97P74AJM8PTO06YGY0P17EXV366HV81N")
-SUPABASE_URL  = os.getenv("SUPABASE_URL",  "https://wlfrmnpntpnbjekwnvcs.supabase.co")
-SUPABASE_KEY  = os.getenv("SUPABASE_KEY",  "sb_secret_r7ZC2OnfvL7NCKsm_nSrIA_c6oS7BOZ")
+CLICKUP_TOKEN = os.getenv("CLICKUP_TOKEN")
+SUPABASE_URL  = os.getenv("SUPABASE_URL")
+SUPABASE_KEY  = os.getenv("SUPABASE_KEY")
 
 POLL_INTERVAL_HOURS = 6
 NOVOS_CRIATIVOS_LIST_ID = "901700896208"
