@@ -90,6 +90,16 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
 .strat-tag.concluido{background:rgba(29,158,117,.15);color:#1D9E75;}
 .strat-tag.pendente{background:rgba(231,76,60,.15);color:#e74c3c;}
 .strat-obs{font-size:11px;color:rgba(255,255,255,.35);margin-top:4px;line-height:1.4;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:#0f1923;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:24px;width:100%;max-width:500px;display:flex;flex-direction:column;gap:16px;}
+.modal-title{font-size:14px;font-weight:600;color:#fff;}
+.modal-textarea{background:#000;border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;font-size:13px;padding:12px;resize:vertical;min-height:100px;font-family:Inter,sans-serif;width:100%;}
+.modal-textarea:focus{outline:none;border-color:#c9a84c;}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;}
+.modal-btn{padding:8px 20px;border-radius:8px;border:none;font-size:13px;font-weight:500;cursor:pointer;}
+.modal-btn.cancel{background:rgba(255,255,255,.08);color:#fff;}
+.modal-btn.confirm{background:#c9a84c;color:#000;}
 </style>
 </head>
 <body>
@@ -288,6 +298,18 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
         </tr>
       </tbody>
     </table>
+  </div>
+</div>
+
+<!-- Modal de edição -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal-box">
+    <div class="modal-title">Editar planejamento</div>
+    <textarea class="modal-textarea" id="editModalText"></textarea>
+    <div class="modal-footer">
+      <button class="modal-btn cancel" onclick="closeEditModal()">Cancelar</button>
+      <button class="modal-btn confirm" onclick="confirmEditPlan()">Salvar</button>
+    </div>
   </div>
 </div>
 
@@ -728,15 +750,39 @@ async function registerPlan() {
   } catch(e) { console.error(e); }
 }
 
-async function editPlan(id) {
-  const novoTexto = prompt('Editar planejamento:');
-  if (!novoTexto) return;
+let currentEditId = null;
+
+function editPlan(id) {
+  currentEditId = id;
+  const el = document.getElementById('planHistory');
+  // Pega o texto atual do DOM para preencher o modal
+  const entries = el.querySelectorAll('.plan-entry');
+  // Busca via Supabase
+  fetch(SUPABASE_URL + "/rest/v1/planejamento?id=eq." + id + "&select=texto", {
+    headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY }
+  }).then(r => r.json()).then(d => {
+    if (d && d[0]) {
+      document.getElementById('editModalText').value = d[0].texto;
+      document.getElementById('editModal').classList.add('open');
+    }
+  });
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').classList.remove('open');
+  currentEditId = null;
+}
+
+async function confirmEditPlan() {
+  const novoTexto = document.getElementById('editModalText').value.trim();
+  if (!novoTexto || !currentEditId) return;
   try {
-    await fetch(SUPABASE_URL + "/rest/v1/planejamento?id=eq." + id, {
+    await fetch(SUPABASE_URL + "/rest/v1/planejamento?id=eq." + currentEditId, {
       method: 'PATCH',
       headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({ texto: novoTexto.trim(), editado_em: new Date().toISOString() })
+      body: JSON.stringify({ texto: novoTexto, editado_em: new Date().toISOString() })
     });
+    closeEditModal();
     loadPlanHistory();
   } catch(e) { console.error(e); }
 }
