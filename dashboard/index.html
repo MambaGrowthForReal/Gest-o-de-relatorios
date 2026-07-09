@@ -1325,14 +1325,38 @@ async function fazerLogin() {
     const data = await r.json();
     if (!data || !data.length) { erro.style.display = 'block'; return; }
     usuarioLogado = data[0];
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('dashboardScreen').style.display = 'block';
-    // Atualiza o nome do usuário no topbar
-    const userEl = document.getElementById('userLabel');
-    if (userEl) userEl.textContent = usuarioLogado.nome;
-    loadAds();
+    localStorage.setItem('mamba_user', JSON.stringify({ email, senhaHash, nome: usuarioLogado.nome, perfil: usuarioLogado.perfil }));
+    entrarNoDashboard();
   } catch(e) { console.error(e); erro.style.display = 'block'; }
 }
+
+function entrarNoDashboard() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('dashboardScreen').style.display = 'block';
+  const userEl = document.getElementById('userLabel');
+  if (userEl) userEl.textContent = usuarioLogado.nome;
+  loadAds();
+}
+
+async function verificarSessao() {
+  const saved = localStorage.getItem('mamba_user');
+  if (!saved) return;
+  try {
+    const s = JSON.parse(saved);
+    const r = await fetch(SUPABASE_URL + "/rest/v1/usuarios?email=eq." + encodeURIComponent(s.email) + "&senha_hash=eq." + s.senhaHash + "&ativo=eq.true&select=id,nome,perfil", {
+      headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY }
+    });
+    const data = await r.json();
+    if (data && data.length) {
+      usuarioLogado = data[0];
+      entrarNoDashboard();
+    } else {
+      localStorage.removeItem('mamba_user');
+    }
+  } catch(e) { localStorage.removeItem('mamba_user'); }
+}
+
+verificarSessao();
 
 // MD5 simples via Web Crypto não disponível para MD5, usar implementação inline
 async function md5(str) {
@@ -1376,6 +1400,7 @@ async function md5(str) {
 
 function fazerLogout() {
   usuarioLogado = null;
+  localStorage.removeItem('mamba_user');
   document.getElementById('dashboardScreen').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('loginEmail').value = '';
