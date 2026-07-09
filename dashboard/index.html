@@ -1356,7 +1356,7 @@ async function verificarSessao() {
   } catch(e) { localStorage.removeItem('mamba_user'); }
 }
 
-verificarSessao();
+document.addEventListener('DOMContentLoaded', verificarSessao);
 
 // MD5 simples via Web Crypto não disponível para MD5, usar implementação inline
 async function md5(str) {
