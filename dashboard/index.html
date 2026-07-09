@@ -4,28 +4,6 @@
 <meta charset="UTF-8">
 <title>Gestão Operacional · Mamba Growth</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js">
-function registerPlan() {
-  const text = document.getElementById('planText').value.trim();
-  if (!text) return;
-  const plans = JSON.parse(localStorage.getItem('copyPlans') || '[]');
-  plans.unshift({ date: new Date().toLocaleString('pt-BR'), text: text });
-  localStorage.setItem('copyPlans', JSON.stringify(plans.slice(0, 10)));
-  document.getElementById('planText').value = '';
-  document.getElementById('planSaved').textContent = 'Registrado em ' + plans[0].date;
-  loadPlanHistory();
-}
-
-function loadPlanHistory() {
-  const plans = JSON.parse(localStorage.getItem('copyPlans') || '[]');
-  const el = document.getElementById('planHistory');
-  if (!el) return;
-  el.innerHTML = plans.map(p =>
-    '<div class="plan-entry"><div class="plan-entry-date">' + p.date + '</div><div class="plan-entry-text">' + p.text + '</div></div>'
-  ).join('');
-}
-
-loadPlanHistory();
-</script>
 <style>
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -738,10 +716,30 @@ function registerPlan() {
   const text = document.getElementById('planText').value.trim();
   if (!text) return;
   const plans = JSON.parse(localStorage.getItem('copyPlans') || '[]');
-  plans.unshift({ date: new Date().toLocaleString('pt-BR'), text: text });
+  plans.unshift({ id: Date.now(), date: new Date().toLocaleString('pt-BR'), text: text });
   localStorage.setItem('copyPlans', JSON.stringify(plans.slice(0, 10)));
   document.getElementById('planText').value = '';
   document.getElementById('planSaved').textContent = 'Registrado em ' + plans[0].date;
+  loadPlanHistory();
+}
+
+function editPlan(id) {
+  const plans = JSON.parse(localStorage.getItem('copyPlans') || '[]');
+  const plan = plans.find(p => p.id === id);
+  if (!plan) return;
+  const novoTexto = prompt('Editar planejamento:', plan.text);
+  if (novoTexto === null) return;
+  plan.text = novoTexto.trim();
+  plan.editedAt = new Date().toLocaleString('pt-BR');
+  localStorage.setItem('copyPlans', JSON.stringify(plans));
+  loadPlanHistory();
+}
+
+function deletePlan(id) {
+  if (!confirm('Apagar este registro?')) return;
+  let plans = JSON.parse(localStorage.getItem('copyPlans') || '[]');
+  plans = plans.filter(p => p.id !== id);
+  localStorage.setItem('copyPlans', JSON.stringify(plans));
   loadPlanHistory();
 }
 
@@ -750,7 +748,14 @@ function loadPlanHistory() {
   const el = document.getElementById('planHistory');
   if (!el) return;
   el.innerHTML = plans.map(p =>
-    '<div class="plan-entry"><div class="plan-entry-date">' + p.date + '</div><div class="plan-entry-text">' + p.text + '</div></div>'
+    `<div class="plan-entry">
+      <div class="plan-entry-date">${p.date}${p.editedAt ? ' <span style="color:#888;font-size:10px;">(editado em ' + p.editedAt + ')</span>' : ''}</div>
+      <div class="plan-entry-text">${p.text}</div>
+      <div style="margin-top:6px;display:flex;gap:8px;">
+        <button onclick="editPlan(${p.id})" style="background:rgba(201,168,76,.15);color:#c9a84c;border:none;border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;">Editar</button>
+        <button onclick="deletePlan(${p.id})" style="background:rgba(231,76,60,.1);color:#e74c3c;border:none;border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;">Apagar</button>
+      </div>
+    </div>`
   ).join('');
 }
 
