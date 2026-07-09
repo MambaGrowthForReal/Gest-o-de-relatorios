@@ -1221,6 +1221,19 @@ async function addComentario(taskId) {
 let currentEditComentId = null, currentEditComentTaskId = null;
 let currentDeleteComentId = null, currentDeleteComentTaskId = null;
 
+function deleteComentario(id, taskId) {
+  currentDeleteComentId = id;
+  currentDeleteComentTaskId = taskId;
+  currentOtimDeleteId = null; currentOtimDeleteTaskId = null;
+  document.getElementById('deleteComentModal').classList.add('open');
+}
+
+function closeDeleteComent() {
+  document.getElementById('deleteComentModal').classList.remove('open');
+  currentDeleteComentId = null; currentDeleteComentTaskId = null;
+  currentOtimDeleteId = null; currentOtimDeleteTaskId = null;
+}
+
 function editComentario(id, taskId) {
   currentEditComentId = id;
   currentEditComentTaskId = taskId;
