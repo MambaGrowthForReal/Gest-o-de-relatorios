@@ -811,20 +811,22 @@ loadPlanHistory();
 // ── Estratégico ────────────────────────────────────────────
 const ESTRATEGICO_LIST_ID = '901712343657';
 let estrategicoTasks = [];
+let estrategicoComentarios = [];
 
 async function loadEstrategico() {
   const body = document.getElementById('estrategicoBody');
   if (!body) return;
-  body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:rgba(255,255,255,.3);padding:20px;">Carregando...</td></tr>';
+  body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:rgba(255,255,255,.3);padding:20px;">Carregando...</td></tr>';
   try {
-    const url = SUPABASE_URL + "/rest/v1/tasks?apikey=" + SUPABASE_KEY
-      + "&list_id=eq." + ESTRATEGICO_LIST_ID
-      + "&select=id,name,status,assignees,start_date,due_date&limit=1000";
-    const r = await fetch(url, { headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY } });
-    estrategicoTasks = await r.json();
+    const [rTasks, rComents] = await Promise.all([
+      fetch(SUPABASE_URL + "/rest/v1/tasks?apikey=" + SUPABASE_KEY + "&list_id=eq." + ESTRATEGICO_LIST_ID + "&select=id,name,status,assignees,start_date,due_date&limit=1000", { headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY } }),
+      fetch(SUPABASE_URL + "/rest/v1/estrategico_comentarios?order=criado_em.desc&select=*&limit=1000", { headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY } })
+    ]);
+    estrategicoTasks = await rTasks.json();
+    estrategicoComentarios = await rComents.json();
     renderEstrategico();
   } catch(e) {
-    body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#e74c3c;padding:20px;">Erro ao carregar dados.</td></tr>';
+    body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#e74c3c;padding:20px;">Erro ao carregar dados.</td></tr>';
     console.error(e);
   }
 }
@@ -881,6 +883,17 @@ function renderEstrategico() {
     const names = getAssignees(t);
     const isConcluida = concluidas.includes((t.status||'').toLowerCase());
     const op = isConcluida ? 'opacity:0.45;' : '';
+    const ultimoComent = estrategicoComentarios.find(c => c.task_id === t.id);
+    const previewComent = ultimoComent ? `
+      <tr style="${op}" onclick="toggleComentarios('${t.id}')">
+        <td colspan="6" style="padding:0 0 6px 0;cursor:pointer;">
+          <div style="margin:0;padding:6px 12px;background:rgba(201,168,76,.05);border-left:2px solid rgba(201,168,76,.3);border-radius:0 4px 4px 0;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:10px;color:#c9a84c;font-weight:600;white-space:nowrap;">↳ ${new Date(ultimoComent.criado_em).toLocaleDateString('pt-BR')} · ${ultimoComent.usuario}</span>
+            <span style="font-size:11px;color:rgba(255,255,255,.5);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ultimoComent.texto}</span>
+          </div>
+        </td>
+      </tr>` : '';
+
     return `
       <tr style="${op}cursor:pointer;" onclick="toggleComentarios('${t.id}')">
         <td style="font-family:Inter,sans-serif;font-weight:700;font-size:12px;color:${isConcluida?'rgba(255,255,255,.4)':'#fff'};white-space:nowrap;">${names.join(', ') || '—'}</td>
@@ -890,6 +903,7 @@ function renderEstrategico() {
         <td style="font-size:11px;color:rgba(255,255,255,.4);white-space:nowrap;">${fmtDate(t.due_date)}</td>
         <td style="font-size:10px;color:rgba(255,255,255,.3);">▾</td>
       </tr>
+      ${previewComent}
       <tr id="comentarios-${t.id}" style="display:none;">
         <td colspan="6" style="padding:0;">
           <div style="background:#0a1520;border-left:2px solid rgba(201,168,76,.3);margin:0 0 4px 0;padding:14px 16px;">
@@ -945,7 +959,11 @@ async function addComentario(taskId) {
       body: JSON.stringify({ task_id: taskId, texto: txt.value.trim(), usuario: 'admin' })
     });
     txt.value = '';
-    loadComentarios(taskId);
+    // Recarrega tudo para atualizar preview
+    await loadEstrategico();
+    // Reabre o painel da task
+    const row = document.getElementById('comentarios-' + taskId);
+    if (row) { row.style.display = 'table-row'; loadComentarios(taskId); }
   } catch(e) { console.error(e); }
 }
 </script>
