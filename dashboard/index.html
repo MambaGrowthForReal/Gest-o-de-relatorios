@@ -287,6 +287,30 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
   </div>
 </div>
 
+<!-- Modal editar comentário -->
+<div class="modal-overlay" id="editComentModal">
+  <div class="modal-box">
+    <div class="modal-title">Editar atualização</div>
+    <textarea class="modal-textarea" id="editComentText"></textarea>
+    <div class="modal-footer">
+      <button class="modal-btn cancel" onclick="closeEditComent()">Cancelar</button>
+      <button class="modal-btn confirm" onclick="confirmEditComent()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal apagar comentário -->
+<div class="modal-overlay" id="deleteComentModal">
+  <div class="modal-box">
+    <div class="modal-title">Apagar atualização</div>
+    <div style="font-size:13px;color:rgba(255,255,255,.6);">Tem certeza que deseja apagar esta atualização?</div>
+    <div class="modal-footer">
+      <button class="modal-btn cancel" onclick="closeDeleteComent()">Cancelar</button>
+      <button class="modal-btn confirm" style="background:#e74c3c;" onclick="confirmDeleteComent()">Apagar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 let currentSub = 'ads';
 
@@ -944,7 +968,11 @@ async function loadComentarios(taskId) {
     hist.innerHTML = data.map(c => `
       <div style="border-bottom:1px solid rgba(255,255,255,.05);padding-bottom:8px;">
         <div style="font-size:10px;color:rgba(255,255,255,.3);margin-bottom:3px;">${new Date(c.criado_em).toLocaleString('pt-BR')} · <span style="color:#c9a84c;">${c.usuario}</span></div>
-        <div style="font-size:12px;color:rgba(255,255,255,.8);line-height:1.5;">${c.texto}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.8);line-height:1.5;margin-bottom:6px;">${c.texto}</div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="editComentario(${c.id},'${taskId}')" style="background:rgba(201,168,76,.15);color:#c9a84c;border:none;border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;">Editar</button>
+          <button onclick="deleteComentario(${c.id},'${taskId}')" style="background:rgba(231,76,60,.1);color:#e74c3c;border:none;border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;">Apagar</button>
+        </div>
       </div>`).join('');
   } catch(e) { console.error(e); }
 }
@@ -964,6 +992,68 @@ async function addComentario(taskId) {
     // Reabre o painel da task
     const row = document.getElementById('comentarios-' + taskId);
     if (row) { row.style.display = 'table-row'; loadComentarios(taskId); }
+  } catch(e) { console.error(e); }
+}
+
+let currentEditComentId = null, currentEditComentTaskId = null;
+let currentDeleteComentId = null, currentDeleteComentTaskId = null;
+
+function editComentario(id, taskId) {
+  currentEditComentId = id;
+  currentEditComentTaskId = taskId;
+  fetch(SUPABASE_URL + "/rest/v1/estrategico_comentarios?id=eq." + id + "&select=texto", {
+    headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY }
+  }).then(r => r.json()).then(d => {
+    if (d && d[0]) {
+      document.getElementById('editComentText').value = d[0].texto;
+      document.getElementById('editComentModal').classList.add('open');
+    }
+  });
+}
+
+function closeEditComent() {
+  document.getElementById('editComentModal').classList.remove('open');
+  currentEditComentId = null; currentEditComentTaskId = null;
+}
+
+async function confirmEditComent() {
+  const texto = document.getElementById('editComentText').value.trim();
+  if (!texto || !currentEditComentId) return;
+  try {
+    await fetch(SUPABASE_URL + "/rest/v1/estrategico_comentarios?id=eq." + currentEditComentId, {
+      method: 'PATCH',
+      headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ texto })
+    });
+    closeEditComent();
+    await loadEstrategico();
+    const row = document.getElementById('comentarios-' + currentEditComentTaskId);
+    if (row) { row.style.display = 'table-row'; loadComentarios(currentEditComentTaskId); }
+  } catch(e) { console.error(e); }
+}
+
+function deleteComentario(id, taskId) {
+  currentDeleteComentId = id;
+  currentDeleteComentTaskId = taskId;
+  document.getElementById('deleteComentModal').classList.add('open');
+}
+
+function closeDeleteComent() {
+  document.getElementById('deleteComentModal').classList.remove('open');
+  currentDeleteComentId = null; currentDeleteComentTaskId = null;
+}
+
+async function confirmDeleteComent() {
+  if (!currentDeleteComentId) return;
+  try {
+    await fetch(SUPABASE_URL + "/rest/v1/estrategico_comentarios?id=eq." + currentDeleteComentId, {
+      method: 'DELETE',
+      headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY }
+    });
+    closeDeleteComent();
+    await loadEstrategico();
+    const row = document.getElementById('comentarios-' + currentDeleteComentTaskId);
+    if (row) { row.style.display = 'table-row'; loadComentarios(currentDeleteComentTaskId); }
   } catch(e) { console.error(e); }
 }
 </script>
