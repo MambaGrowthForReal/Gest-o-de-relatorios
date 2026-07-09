@@ -787,7 +787,7 @@ async function registerPlan() {
     const r = await fetch(SUPABASE_URL + "/rest/v1/planejamento", {
       method: 'POST',
       headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY, "Content-Type": "application/json", "Prefer": "return=representation" },
-      body: JSON.stringify({ texto: text, usuario: 'admin' })
+      body: JSON.stringify({ texto: text, usuario: (usuarioLogado ? usuarioLogado.nome : 'admin') })
     });
     if (!r.ok) throw new Error(await r.text());
     document.getElementById('planText').value = '';
@@ -1142,7 +1142,7 @@ async function addOtimComent(taskId) {
     await fetch(SUPABASE_URL + "/rest/v1/otimizacao_comentarios", {
       method: 'POST',
       headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY, "Content-Type": "application/json", "Prefer": "return=representation" },
-      body: JSON.stringify({ task_id: taskId, texto: txt.value.trim(), usuario: 'admin' })
+      body: JSON.stringify({ task_id: taskId, texto: txt.value.trim(), usuario: (usuarioLogado ? usuarioLogado.nome : 'admin') })
     });
     txt.value = '';
     await loadOtimizacao();
@@ -1207,7 +1207,7 @@ async function addComentario(taskId) {
     await fetch(SUPABASE_URL + "/rest/v1/estrategico_comentarios", {
       method: 'POST',
       headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY, "Content-Type": "application/json", "Prefer": "return=representation" },
-      body: JSON.stringify({ task_id: taskId, texto: txt.value.trim(), usuario: 'admin' })
+      body: JSON.stringify({ task_id: taskId, texto: txt.value.trim(), usuario: (usuarioLogado ? usuarioLogado.nome : 'admin') })
     });
     txt.value = '';
     // Recarrega tudo para atualizar preview
