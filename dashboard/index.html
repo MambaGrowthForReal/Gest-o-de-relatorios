@@ -100,6 +100,15 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
 .modal-btn{padding:8px 20px;border-radius:8px;border:none;font-size:13px;font-weight:500;cursor:pointer;}
 .modal-btn.cancel{background:rgba(255,255,255,.08);color:#fff;}
 .modal-btn.confirm{background:#c9a84c;color:#000;}
+.otim-col{flex:1;min-width:280px;max-width:400px;background:#0a1520;border:1px solid rgba(255,255,255,.07);border-radius:12px;overflow:hidden;}
+.otim-col-header{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.07);}
+.otim-col-title{font-size:13px;font-weight:700;color:#fff;text-transform:capitalize;}
+.otim-col-sub{font-size:11px;color:rgba(255,255,255,.4);margin-top:2px;text-transform:capitalize;}
+.otim-task{padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;}
+.otim-task:hover{background:rgba(255,255,255,.03);}
+.otim-task-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.otim-task-name{font-size:12px;color:rgba(255,255,255,.85);font-weight:500;}
+.otim-coment-area{background:#000;border-top:1px solid rgba(255,255,255,.05);padding:12px 16px;display:none;}
 </style>
 </head>
 <body>
@@ -216,7 +225,9 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
 <!-- OTIMIZAÇÃO DE FUNIL -->
 <div class="page" id="page-otimizacao">
   <div class="sec-label" style="margin-top:8px;">Otimiza&ccedil;&atilde;o de Funil</div>
-  <div class="placeholder" style="margin-top:16px;">Em breve</div>
+  <div id="otimizacaoGrid" style="display:flex;gap:16px;margin-top:16px;flex-wrap:wrap;align-items:flex-start;">
+    <div style="color:rgba(255,255,255,.3);font-size:13px;">Carregando...</div>
+  </div>
 </div>
 
 <!-- CS --><!-- CS -->
@@ -328,6 +339,7 @@ function selectMain(key, btn) {
   if (key === 'edicao') { sub.classList.add('visible'); showPage('page-' + currentSub); }
   else { sub.classList.remove('visible'); showPage('page-' + key); }
   if (key === 'estrategico') loadEstrategico();
+  if (key === 'otimizacao') loadOtimizacao();
 }
 
 function selectSub(key, btn) {
@@ -651,6 +663,8 @@ function applyFilter() {
     loadCopy();
   } else if (pageId.includes('vsl')) {
     loadVSL();
+  } else if (pageId.includes('otimizacao')) {
+    loadOtimizacao();
   } else {
     loadAds();
   }
@@ -950,7 +964,172 @@ function renderEstrategico() {
   }).join('');
 }
 
-// ── Comentários Estratégico ────────────────────────────────
+// ── Otimização de Funil ───────────────────────────────────
+const OTIM_LIST_ID = '901702493697';
+const OTIM_STATUS = ['disponível para teste', 'disponivel para teste', 'testando', 'teste concluído'];
+let otimComentarios = [];
+
+async function loadOtimizacao() {
+  const grid = document.getElementById('otimizacaoGrid');
+  if (!grid) return;
+  grid.innerHTML = '<div style="color:rgba(255,255,255,.3);font-size:13px;">Carregando...</div>';
+
+  try {
+    const dtStart = document.getElementById('dtStart').value;
+    const dtEnd = document.getElementById('dtEnd').value || new Date().toISOString().split('T')[0];
+
+    const startISO = dtStart ? new Date(dtStart + "T00:00:00Z").toISOString() : '';
+    const endISO = new Date(dtEnd + "T23:59:59Z").toISOString();
+
+    let url = SUPABASE_URL + "/rest/v1/tasks?apikey=" + SUPABASE_KEY
+      + "&list_id=eq." + OTIM_LIST_ID
+      + "&select=id,name,status,tags,due_date"
+      + "&limit=1000";
+    if (startISO) url += "&due_date=gte." + startISO;
+    url += "&due_date=lte." + endISO;
+
+    const [rTasks, rComents] = await Promise.all([
+      fetch(url, { headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY } }),
+      fetch(SUPABASE_URL + "/rest/v1/otimizacao_comentarios?order=criado_em.desc&select=*&limit=1000", { headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY } })
+    ]);
+
+    let tasks = await rTasks.json();
+    otimComentarios = await rComents.json();
+
+    // Filtrar apenas os 3 status relevantes
+    tasks = tasks.filter(t => OTIM_STATUS.includes((t.status || '').toLowerCase()));
+
+    if (tasks.length === 0) {
+      grid.innerHTML = '<div style="color:rgba(255,255,255,.3);font-size:13px;">Nenhuma task no período.</div>';
+      return;
+    }
+
+    // Agrupar por produto + idioma (tags)
+    const grupos = {};
+    tasks.forEach(t => {
+      let tags = [];
+      try { tags = JSON.parse(t.tags || '[]'); } catch(e) {}
+      const key = tags.join('|') || 'sem-tag';
+      if (!grupos[key]) grupos[key] = { tags, tasks: [] };
+      grupos[key].tasks.push(t);
+    });
+
+    // Ordenar tasks: disponível > testando > concluído
+    const statusOrd = s => {
+      const sl = (s||'').toLowerCase();
+      if (sl.includes('disponível') || sl.includes('disponivel')) return 0;
+      if (sl === 'testando') return 1;
+      return 2;
+    };
+
+    const statusTag = s => {
+      const sl = (s||'').toLowerCase();
+      let bg, color;
+      if (sl.includes('disponível') || sl.includes('disponivel')) { bg='rgba(42,111,196,.2)'; color='#5b9cf6'; }
+      else if (sl === 'testando') { bg='rgba(201,168,76,.15)'; color='#c9a84c'; }
+      else { bg='rgba(29,158,117,.15)'; color='#1D9E75'; }
+      return `<span style="background:${bg};color:${color};padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap;">${s}</span>`;
+    };
+
+    grid.innerHTML = Object.entries(grupos).map(([key, grupo]) => {
+      const produto = grupo.tags.find(t => !['ingles','inglês','alemão','alemao','portugues','português','frances','francês'].includes(t.toLowerCase())) || grupo.tags[0] || '—';
+      const idioma = grupo.tags.find(t => ['ingles','inglês','alemão','alemao','portugues','português','frances','francês'].includes(t.toLowerCase())) || '';
+
+      grupo.tasks.sort((a,b) => statusOrd(a.status) - statusOrd(b.status));
+
+      return `<div class="otim-col">
+        <div class="otim-col-header">
+          <div class="otim-col-title">${produto}</div>
+          ${idioma ? `<div class="otim-col-sub">${idioma}</div>` : ''}
+        </div>
+        ${grupo.tasks.map(t => {
+          const ultimoComent = otimComentarios.find(c => c.task_id === t.id);
+          return `<div class="otim-task" onclick="toggleOtimComent('${t.id}')">
+            <div class="otim-task-row">
+              <span class="otim-task-name">${t.name}</span>
+              ${statusTag(t.status)}
+            </div>
+            ${ultimoComent ? `<div style="margin-top:6px;padding:5px 8px;background:rgba(201,168,76,.05);border-left:2px solid rgba(201,168,76,.3);border-radius:0 4px 4px 0;">
+              <span style="font-size:10px;color:#c9a84c;font-weight:600;">${new Date(ultimoComent.criado_em).toLocaleDateString('pt-BR')} · ${ultimoComent.usuario}</span>
+              <div style="font-size:11px;color:rgba(255,255,255,.5);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ultimoComent.texto}</div>
+            </div>` : ''}
+            <div class="otim-coment-area" id="otim-coment-${t.id}">
+              <div id="otim-hist-${t.id}" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;"></div>
+              <div style="display:flex;gap:8px;align-items:flex-end;">
+                <textarea id="otim-txt-${t.id}" placeholder="Adicionar atualização..." onclick="event.stopPropagation()" style="flex:1;background:#0a1520;border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;font-size:12px;padding:8px;resize:vertical;min-height:50px;font-family:Inter,sans-serif;outline:none;"></textarea>
+                <button onclick="event.stopPropagation();addOtimComent('${t.id}')" style="background:#c9a84c;color:#000;border:none;border-radius:8px;padding:8px 12px;font-size:11px;font-weight:600;cursor:pointer;">Registrar</button>
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }).join('');
+
+  } catch(e) { console.error(e); grid.innerHTML = '<div style="color:#e74c3c;font-size:13px;">Erro ao carregar.</div>'; }
+}
+
+function toggleOtimComent(taskId) {
+  const area = document.getElementById('otim-coment-' + taskId);
+  if (!area) return;
+  const isOpen = area.style.display === 'block';
+  area.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) loadOtimComentarios(taskId);
+}
+
+async function loadOtimComentarios(taskId) {
+  const hist = document.getElementById('otim-hist-' + taskId);
+  if (!hist) return;
+  hist.innerHTML = '<div style="font-size:11px;color:rgba(255,255,255,.3);">Carregando...</div>';
+  try {
+    const r = await fetch(SUPABASE_URL + "/rest/v1/otimizacao_comentarios?task_id=eq." + taskId + "&order=criado_em.desc&select=*", {
+      headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY }
+    });
+    const data = await r.json();
+    if (!data.length) { hist.innerHTML = '<div style="font-size:11px;color:rgba(255,255,255,.2);">Nenhuma atualização ainda.</div>'; return; }
+    hist.innerHTML = data.map(c => `
+      <div style="border-bottom:1px solid rgba(255,255,255,.05);padding-bottom:8px;">
+        <div style="font-size:10px;color:rgba(255,255,255,.3);margin-bottom:3px;">${new Date(c.criado_em).toLocaleString('pt-BR')} · <span style="color:#c9a84c;">${c.usuario}</span></div>
+        <div style="font-size:12px;color:rgba(255,255,255,.8);line-height:1.5;margin-bottom:4px;">${c.texto}</div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="editOtimComent(${c.id},'${taskId}')" style="background:rgba(201,168,76,.15);color:#c9a84c;border:none;border-radius:6px;padding:2px 8px;font-size:10px;cursor:pointer;">Editar</button>
+          <button onclick="deleteOtimComent(${c.id},'${taskId}')" style="background:rgba(231,76,60,.1);color:#e74c3c;border:none;border-radius:6px;padding:2px 8px;font-size:10px;cursor:pointer;">Apagar</button>
+        </div>
+      </div>`).join('');
+  } catch(e) { console.error(e); }
+}
+
+async function addOtimComent(taskId) {
+  const txt = document.getElementById('otim-txt-' + taskId);
+  if (!txt || !txt.value.trim()) return;
+  try {
+    await fetch(SUPABASE_URL + "/rest/v1/otimizacao_comentarios", {
+      method: 'POST',
+      headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY, "Content-Type": "application/json", "Prefer": "return=representation" },
+      body: JSON.stringify({ task_id: taskId, texto: txt.value.trim(), usuario: 'admin' })
+    });
+    txt.value = '';
+    await loadOtimizacao();
+    const area = document.getElementById('otim-coment-' + taskId);
+    if (area) { area.style.display = 'block'; loadOtimComentarios(taskId); }
+  } catch(e) { console.error(e); }
+}
+
+let currentOtimEditId = null, currentOtimEditTaskId = null;
+let currentOtimDeleteId = null, currentOtimDeleteTaskId = null;
+
+function editOtimComent(id, taskId) {
+  currentOtimEditId = id; currentOtimEditTaskId = taskId;
+  fetch(SUPABASE_URL + "/rest/v1/otimizacao_comentarios?id=eq." + id + "&select=texto", {
+    headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY }
+  }).then(r => r.json()).then(d => {
+    if (d && d[0]) { document.getElementById('editComentText').value = d[0].texto; document.getElementById('editComentModal').classList.add('open'); }
+  });
+}
+
+function deleteOtimComent(id, taskId) {
+  currentOtimDeleteId = id; currentOtimDeleteTaskId = taskId;
+  document.getElementById('deleteComentModal').classList.add('open');
+}
 function toggleComentarios(taskId) {
   const row = document.getElementById('comentarios-' + taskId);
   if (!row) return;
@@ -1025,42 +1204,61 @@ function closeEditComent() {
 
 async function confirmEditComent() {
   const texto = document.getElementById('editComentText').value.trim();
-  if (!texto || !currentEditComentId) return;
+  if (!texto) return;
   try {
-    await fetch(SUPABASE_URL + "/rest/v1/estrategico_comentarios?id=eq." + currentEditComentId, {
-      method: 'PATCH',
-      headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({ texto })
-    });
-    closeEditComent();
-    await loadEstrategico();
-    const row = document.getElementById('comentarios-' + currentEditComentTaskId);
-    if (row) { row.style.display = 'table-row'; loadComentarios(currentEditComentTaskId); }
+    // Estratégico
+    if (currentEditComentId) {
+      await fetch(SUPABASE_URL + "/rest/v1/estrategico_comentarios?id=eq." + currentEditComentId, {
+        method: 'PATCH',
+        headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({ texto })
+      });
+      closeEditComent();
+      await loadEstrategico();
+      const row = document.getElementById('comentarios-' + currentEditComentTaskId);
+      if (row) { row.style.display = 'table-row'; loadComentarios(currentEditComentTaskId); }
+    }
+    // Otimização
+    if (currentOtimEditId) {
+      await fetch(SUPABASE_URL + "/rest/v1/otimizacao_comentarios?id=eq." + currentOtimEditId, {
+        method: 'PATCH',
+        headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({ texto })
+      });
+      closeEditComent();
+      await loadOtimizacao();
+      const area = document.getElementById('otim-coment-' + currentOtimEditTaskId);
+      if (area) { area.style.display = 'block'; loadOtimComentarios(currentOtimEditTaskId); }
+      currentOtimEditId = null; currentOtimEditTaskId = null;
+    }
   } catch(e) { console.error(e); }
 }
 
-function deleteComentario(id, taskId) {
-  currentDeleteComentId = id;
-  currentDeleteComentTaskId = taskId;
-  document.getElementById('deleteComentModal').classList.add('open');
-}
-
-function closeDeleteComent() {
-  document.getElementById('deleteComentModal').classList.remove('open');
-  currentDeleteComentId = null; currentDeleteComentTaskId = null;
-}
-
 async function confirmDeleteComent() {
-  if (!currentDeleteComentId) return;
   try {
-    await fetch(SUPABASE_URL + "/rest/v1/estrategico_comentarios?id=eq." + currentDeleteComentId, {
-      method: 'DELETE',
-      headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY }
-    });
-    closeDeleteComent();
-    await loadEstrategico();
-    const row = document.getElementById('comentarios-' + currentDeleteComentTaskId);
-    if (row) { row.style.display = 'table-row'; loadComentarios(currentDeleteComentTaskId); }
+    // Estratégico
+    if (currentDeleteComentId) {
+      await fetch(SUPABASE_URL + "/rest/v1/estrategico_comentarios?id=eq." + currentDeleteComentId, {
+        method: 'DELETE',
+        headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY }
+      });
+      closeDeleteComent();
+      await loadEstrategico();
+      const row = document.getElementById('comentarios-' + currentDeleteComentTaskId);
+      if (row) { row.style.display = 'table-row'; loadComentarios(currentDeleteComentTaskId); }
+    }
+    // Otimização
+    if (currentOtimDeleteId) {
+      await fetch(SUPABASE_URL + "/rest/v1/otimizacao_comentarios?id=eq." + currentOtimDeleteId, {
+        method: 'DELETE',
+        headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY }
+      });
+      closeDeleteComent();
+      await loadOtimizacao();
+      const area = document.getElementById('otim-coment-' + currentOtimDeleteTaskId);
+      if (area) { area.style.display = 'block'; loadOtimComentarios(currentOtimDeleteTaskId); }
+      currentOtimDeleteId = null; currentOtimDeleteTaskId = null;
+    }
   } catch(e) { console.error(e); }
 }
 </script>
