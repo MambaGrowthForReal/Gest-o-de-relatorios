@@ -193,19 +193,20 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
     <div class="sec-label">Demandas Estrat&eacute;gicas</div>
     <input id="estrategicoFiltro" type="text" placeholder="Filtrar por responsável..." onkeyup="renderEstrategico()" style="background:#0f1923;border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;font-size:12px;padding:6px 12px;width:220px;outline:none;">
   </div>
-  <div class="strat-table-wrap" style="max-height:calc(100vh - 180px);overflow-y:auto;">
+  <div class="strat-table-wrap" style="max-height:calc(100vh - 180px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent;">
     <table class="strat-table" style="width:100%;">
       <thead>
         <tr>
-          <th>Respons&aacute;vel</th>
-          <th>Tarefa</th>
-          <th>Status</th>
-          <th>In&iacute;cio</th>
-          <th>Vencimento</th>
+          <th style="font-size:10px;font-weight:600;letter-spacing:.08em;color:rgba(255,255,255,.4);">RESPONS&Aacute;VEL</th>
+          <th style="font-size:10px;font-weight:600;letter-spacing:.08em;color:rgba(255,255,255,.4);">TAREFA</th>
+          <th style="font-size:10px;font-weight:600;letter-spacing:.08em;color:rgba(255,255,255,.4);">STATUS</th>
+          <th style="font-size:10px;font-weight:600;letter-spacing:.08em;color:rgba(255,255,255,.4);">IN&Iacute;CIO</th>
+          <th style="font-size:10px;font-weight:600;letter-spacing:.08em;color:rgba(255,255,255,.4);">VENCIMENTO</th>
+          <th></th>
         </tr>
       </thead>
       <tbody id="estrategicoBody">
-        <tr><td colspan="5" style="text-align:center;color:rgba(255,255,255,.3);padding:20px;">Carregando...</td></tr>
+        <tr><td colspan="6" style="text-align:center;color:rgba(255,255,255,.3);padding:20px;">Carregando...</td></tr>
       </tbody>
     </table>
   </div>
@@ -836,28 +837,16 @@ function renderEstrategico() {
   const statusTag = s => {
     const sl = (s || '').toLowerCase();
     let bg, color;
-    if (sl === 'concluído' || sl === 'concluido' || sl === 'complete' || sl === 'closed') {
-      bg = 'rgba(29,158,117,.15)'; color = '#1D9E75';
-    } else if (sl === 'em andamento') {
-      bg = 'rgba(201,168,76,.15)'; color = '#c9a84c';
-    } else if (sl === 'pendente') {
-      bg = 'rgba(231,76,60,.15)'; color = '#e74c3c';
-    } else if (sl === 'aguardando') {
-      bg = 'rgba(42,111,196,.15)'; color = '#2a6fc4';
-    } else if (sl === 'backlog') {
-      bg = 'rgba(155,89,182,.15)'; color = '#9b59b6';
-    } else if (sl === 'não iniciado' || sl === 'nao iniciado') {
-      bg = 'rgba(255,255,255,.08)'; color = '#888';
-    } else {
-      bg = 'rgba(255,255,255,.08)'; color = '#aaa';
-    }
-    return `<span style="background:${bg};color:${color};padding:3px 10px;border-radius:20px;font-size:10px;font-weight:500;white-space:nowrap;">${s || '—'}</span>`;
+    if (['concluído','concluido','complete','closed'].includes(sl)) { bg='rgba(29,158,117,.15)'; color='#1D9E75'; }
+    else if (sl === 'em andamento') { bg='rgba(201,168,76,.15)'; color='#c9a84c'; }
+    else if (sl === 'pendente') { bg='rgba(231,76,60,.15)'; color='#e74c3c'; }
+    else if (sl === 'aguardando') { bg='rgba(42,111,196,.15)'; color='#2a6fc4'; }
+    else if (sl === 'backlog') { bg='rgba(155,89,182,.15)'; color='#9b59b6'; }
+    else { bg='rgba(255,255,255,.07)'; color='rgba(255,255,255,.4)'; }
+    return `<span style="background:${bg};color:${color};padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap;">${s || '—'}</span>`;
   };
 
-  const fmtDate = iso => {
-    if (!iso) return '—';
-    return new Date(iso).toLocaleDateString('pt-BR');
-  };
+  const fmtDate = iso => iso ? new Date(iso).toLocaleDateString('pt-BR') : '—';
 
   const getAssignees = t => {
     let ass = [];
@@ -869,10 +858,10 @@ function renderEstrategico() {
     const sl = (s || '').toLowerCase();
     if (sl === 'em andamento') return 0;
     if (sl === 'pendente') return 1;
-    if (sl === 'não iniciado' || sl === 'nao iniciado') return 2;
+    if (['não iniciado','nao iniciado'].includes(sl)) return 2;
     if (sl === 'aguardando') return 3;
     if (sl === 'backlog') return 4;
-    return 5; // concluído/complete/closed
+    return 5;
   };
 
   let tasks = estrategicoTasks.filter(t => {
@@ -883,22 +872,81 @@ function renderEstrategico() {
   tasks.sort((a, b) => statusOrder(a.status) - statusOrder(b.status));
 
   if (tasks.length === 0) {
-    body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:rgba(255,255,255,.3);padding:20px;">Nenhuma demanda encontrada.</td></tr>';
+    body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:rgba(255,255,255,.3);padding:20px;">Nenhuma demanda encontrada.</td></tr>';
     return;
   }
 
-  const concluidas = ['concluído', 'concluido', 'complete', 'closed'];
+  const concluidas = ['concluído','concluido','complete','closed'];
   body.innerHTML = tasks.map(t => {
     const names = getAssignees(t);
-    const isConcluida = concluidas.includes((t.status || '').toLowerCase());
-    return `<tr style="${isConcluida ? 'opacity:0.45;' : ''}">
-      <td style="font-size:12px;color:${isConcluida ? 'rgba(255,255,255,.5)' : '#fff'};">${names.join(', ') || '—'}</td>
-      <td style="font-size:12px;color:${isConcluida ? 'rgba(255,255,255,.5)' : '#fff'};">${t.name || '—'}</td>
-      <td>${statusTag(t.status)}</td>
-      <td class="strat-data">${fmtDate(t.start_date)}</td>
-      <td class="strat-data">${fmtDate(t.due_date)}</td>
-    </tr>`;
+    const isConcluida = concluidas.includes((t.status||'').toLowerCase());
+    const op = isConcluida ? 'opacity:0.45;' : '';
+    return `
+      <tr style="${op}cursor:pointer;" onclick="toggleComentarios('${t.id}')">
+        <td style="font-family:Inter,sans-serif;font-weight:700;font-size:12px;color:${isConcluida?'rgba(255,255,255,.4)':'#fff'};white-space:nowrap;">${names.join(', ') || '—'}</td>
+        <td style="font-family:Inter,sans-serif;font-size:12px;color:${isConcluida?'rgba(255,255,255,.4)':'rgba(255,255,255,.85)'};line-height:1.4;">${t.name || '—'}</td>
+        <td>${statusTag(t.status)}</td>
+        <td style="font-size:11px;color:rgba(255,255,255,.4);white-space:nowrap;">${fmtDate(t.start_date)}</td>
+        <td style="font-size:11px;color:rgba(255,255,255,.4);white-space:nowrap;">${fmtDate(t.due_date)}</td>
+        <td style="font-size:10px;color:rgba(255,255,255,.3);">▾</td>
+      </tr>
+      <tr id="comentarios-${t.id}" style="display:none;">
+        <td colspan="6" style="padding:0;">
+          <div style="background:#0a1520;border-left:2px solid rgba(201,168,76,.3);margin:0 0 4px 0;padding:14px 16px;">
+            <div style="font-size:10px;font-weight:600;letter-spacing:.08em;color:rgba(255,255,255,.3);margin-bottom:10px;">ATUALIZAÇÕES</div>
+            <div id="hist-${t.id}" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;"></div>
+            <div style="display:flex;gap:8px;align-items:flex-end;">
+              <textarea id="txt-${t.id}" placeholder="Adicionar atualização..." style="flex:1;background:#000;border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;font-size:12px;padding:10px;resize:vertical;min-height:60px;font-family:Inter,sans-serif;outline:none;"></textarea>
+              <button onclick="addComentario('${t.id}')" style="background:#c9a84c;color:#000;border:none;border-radius:8px;padding:10px 16px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">Registrar</button>
+            </div>
+          </div>
+        </td>
+      </tr>`;
   }).join('');
+}
+
+// ── Comentários Estratégico ────────────────────────────────
+function toggleComentarios(taskId) {
+  const row = document.getElementById('comentarios-' + taskId);
+  if (!row) return;
+  const isOpen = row.style.display !== 'none';
+  row.style.display = isOpen ? 'none' : 'table-row';
+  if (!isOpen) loadComentarios(taskId);
+}
+
+async function loadComentarios(taskId) {
+  const hist = document.getElementById('hist-' + taskId);
+  if (!hist) return;
+  hist.innerHTML = '<div style="font-size:11px;color:rgba(255,255,255,.3);">Carregando...</div>';
+  try {
+    const r = await fetch(SUPABASE_URL + "/rest/v1/estrategico_comentarios?task_id=eq." + taskId + "&order=criado_em.desc&select=*", {
+      headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY }
+    });
+    const data = await r.json();
+    if (!data.length) {
+      hist.innerHTML = '<div style="font-size:11px;color:rgba(255,255,255,.2);">Nenhuma atualização ainda.</div>';
+      return;
+    }
+    hist.innerHTML = data.map(c => `
+      <div style="border-bottom:1px solid rgba(255,255,255,.05);padding-bottom:8px;">
+        <div style="font-size:10px;color:rgba(255,255,255,.3);margin-bottom:3px;">${new Date(c.criado_em).toLocaleString('pt-BR')} · <span style="color:#c9a84c;">${c.usuario}</span></div>
+        <div style="font-size:12px;color:rgba(255,255,255,.8);line-height:1.5;">${c.texto}</div>
+      </div>`).join('');
+  } catch(e) { console.error(e); }
+}
+
+async function addComentario(taskId) {
+  const txt = document.getElementById('txt-' + taskId);
+  if (!txt || !txt.value.trim()) return;
+  try {
+    await fetch(SUPABASE_URL + "/rest/v1/estrategico_comentarios", {
+      method: 'POST',
+      headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY, "Content-Type": "application/json", "Prefer": "return=representation" },
+      body: JSON.stringify({ task_id: taskId, texto: txt.value.trim(), usuario: 'admin' })
+    });
+    txt.value = '';
+    loadComentarios(taskId);
+  } catch(e) { console.error(e); }
 }
 </script>
 </body>
