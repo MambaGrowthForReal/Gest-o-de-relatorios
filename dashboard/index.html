@@ -313,6 +313,18 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
   </div>
 </div>
 
+<!-- Modal de apagar -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-box">
+    <div class="modal-title">Apagar registro</div>
+    <div style="font-size:13px;color:rgba(255,255,255,.6);">Tem certeza que deseja apagar este registro? Esta ação não pode ser desfeita.</div>
+    <div class="modal-footer">
+      <button class="modal-btn cancel" onclick="closeDeleteModal()">Cancelar</button>
+      <button class="modal-btn confirm" style="background:#e74c3c;" onclick="confirmDeletePlan()">Apagar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 let currentSub = 'ads';
 
@@ -787,13 +799,26 @@ async function confirmEditPlan() {
   } catch(e) { console.error(e); }
 }
 
-async function deletePlan(id) {
-  if (!confirm('Apagar este registro?')) return;
+let currentDeleteId = null;
+
+function deletePlan(id) {
+  currentDeleteId = id;
+  document.getElementById('deleteModal').classList.add('open');
+}
+
+function closeDeleteModal() {
+  document.getElementById('deleteModal').classList.remove('open');
+  currentDeleteId = null;
+}
+
+async function confirmDeletePlan() {
+  if (!currentDeleteId) return;
   try {
-    await fetch(SUPABASE_URL + "/rest/v1/planejamento?id=eq." + id, {
+    await fetch(SUPABASE_URL + "/rest/v1/planejamento?id=eq." + currentDeleteId, {
       method: 'DELETE',
       headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY }
     });
+    closeDeleteModal();
     loadPlanHistory();
   } catch(e) { console.error(e); }
 }
