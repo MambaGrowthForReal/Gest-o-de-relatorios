@@ -92,6 +92,7 @@ def parse_task(task, space_id, space_name, list_id, list_name):
         "list_name":    list_name,
         "due_date":     ts(task.get("due_date")),
         "start_date":   ts(task.get("start_date")),
+        "tags":         json.dumps([t.get("name", "") for t in task.get("tags", [])]),
         "date_created": ts(task.get("date_created")),
         "date_updated": ts(task.get("date_updated")),
         "synced_at":    datetime.now(tz=timezone.utc).isoformat(),
