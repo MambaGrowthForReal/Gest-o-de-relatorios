@@ -1,0 +1,12 @@
+# Ambiente Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+venv/
+.venv/
+
+# Credenciais e segredos
+.env.local
+secrets.json
+credentials.json
