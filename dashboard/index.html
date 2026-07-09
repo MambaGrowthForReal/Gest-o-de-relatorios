@@ -712,51 +712,64 @@ async function loadCopy() {
   }
 }
 
-function registerPlan() {
+async function registerPlan() {
   const text = document.getElementById('planText').value.trim();
   if (!text) return;
-  const plans = JSON.parse(localStorage.getItem('copyPlans') || '[]');
-  plans.unshift({ id: Date.now(), date: new Date().toLocaleString('pt-BR'), text: text });
-  localStorage.setItem('copyPlans', JSON.stringify(plans.slice(0, 10)));
-  document.getElementById('planText').value = '';
-  document.getElementById('planSaved').textContent = 'Registrado em ' + plans[0].date;
-  loadPlanHistory();
+  try {
+    const r = await fetch(SUPABASE_URL + "/rest/v1/planejamento", {
+      method: 'POST',
+      headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY, "Content-Type": "application/json", "Prefer": "return=representation" },
+      body: JSON.stringify({ texto: text, usuario: 'admin' })
+    });
+    if (!r.ok) throw new Error(await r.text());
+    document.getElementById('planText').value = '';
+    document.getElementById('planSaved').textContent = 'Registrado em ' + new Date().toLocaleString('pt-BR');
+    loadPlanHistory();
+  } catch(e) { console.error(e); }
 }
 
-function editPlan(id) {
-  const plans = JSON.parse(localStorage.getItem('copyPlans') || '[]');
-  const plan = plans.find(p => p.id === id);
-  if (!plan) return;
-  const novoTexto = prompt('Editar planejamento:', plan.text);
-  if (novoTexto === null) return;
-  plan.text = novoTexto.trim();
-  plan.editedAt = new Date().toLocaleString('pt-BR');
-  localStorage.setItem('copyPlans', JSON.stringify(plans));
-  loadPlanHistory();
+async function editPlan(id) {
+  const novoTexto = prompt('Editar planejamento:');
+  if (!novoTexto) return;
+  try {
+    await fetch(SUPABASE_URL + "/rest/v1/planejamento?id=eq." + id, {
+      method: 'PATCH',
+      headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ texto: novoTexto.trim(), editado_em: new Date().toISOString() })
+    });
+    loadPlanHistory();
+  } catch(e) { console.error(e); }
 }
 
-function deletePlan(id) {
+async function deletePlan(id) {
   if (!confirm('Apagar este registro?')) return;
-  let plans = JSON.parse(localStorage.getItem('copyPlans') || '[]');
-  plans = plans.filter(p => p.id !== id);
-  localStorage.setItem('copyPlans', JSON.stringify(plans));
-  loadPlanHistory();
+  try {
+    await fetch(SUPABASE_URL + "/rest/v1/planejamento?id=eq." + id, {
+      method: 'DELETE',
+      headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY }
+    });
+    loadPlanHistory();
+  } catch(e) { console.error(e); }
 }
 
-function loadPlanHistory() {
-  const plans = JSON.parse(localStorage.getItem('copyPlans') || '[]');
+async function loadPlanHistory() {
   const el = document.getElementById('planHistory');
   if (!el) return;
-  el.innerHTML = plans.map(p =>
-    `<div class="plan-entry">
-      <div class="plan-entry-date">${p.date}${p.editedAt ? ' <span style="color:#888;font-size:10px;">(editado em ' + p.editedAt + ')</span>' : ''}</div>
-      <div class="plan-entry-text">${p.text}</div>
-      <div style="margin-top:6px;display:flex;gap:8px;">
-        <button onclick="editPlan(${p.id})" style="background:rgba(201,168,76,.15);color:#c9a84c;border:none;border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;">Editar</button>
-        <button onclick="deletePlan(${p.id})" style="background:rgba(231,76,60,.1);color:#e74c3c;border:none;border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;">Apagar</button>
-      </div>
-    </div>`
-  ).join('');
+  try {
+    const r = await fetch(SUPABASE_URL + "/rest/v1/planejamento?order=criado_em.desc&limit=20", {
+      headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY }
+    });
+    const plans = await r.json();
+    el.innerHTML = plans.map(p => `
+      <div class="plan-entry">
+        <div class="plan-entry-date">${new Date(p.criado_em).toLocaleString('pt-BR')} · <span style="color:#c9a84c;">${p.usuario}</span>${p.editado_em ? ' <span style="color:#888;font-size:10px;">(editado em ' + new Date(p.editado_em).toLocaleString('pt-BR') + ')</span>' : ''}</div>
+        <div class="plan-entry-text">${p.texto}</div>
+        <div style="margin-top:6px;display:flex;gap:8px;">
+          <button onclick="editPlan(${p.id})" style="background:rgba(201,168,76,.15);color:#c9a84c;border:none;border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;">Editar</button>
+          <button onclick="deletePlan(${p.id})" style="background:rgba(231,76,60,.1);color:#e74c3c;border:none;border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;">Apagar</button>
+        </div>
+      </div>`).join('');
+  } catch(e) { console.error(e); }
 }
 
 loadPlanHistory();
