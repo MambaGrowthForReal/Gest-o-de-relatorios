@@ -66,10 +66,15 @@ def get_task_detail(task_id):
     r.raise_for_status()
     return r.json()
 
+def get_subtasks(task_id):
+    r = requests.get(f"https://api.clickup.com/api/v2/task/{task_id}?include_subtasks=true", headers=CLICKUP_HEADERS)
+    r.raise_for_status()
+    return r.json().get("subtasks", [])
+
 # ── Parser de tarefa ───────────────────────────────────────
 
 def parse_task(task, space_id, space_name, list_id, list_name):
-    assignees = [{\"id\": a[\"id\"], \"username\": a.get(\"username\", \"\"), \"email\": a.get(\"email\", \"\")} for a in task.get(\"assignees\", [])]
+    assignees = [{"id": a["id"], "username": a.get("username", ""), "email": a.get("email", "")} for a in task.get("assignees", [])]
 
     def ts(ms):
         if not ms:
@@ -77,59 +82,20 @@ def parse_task(task, space_id, space_name, list_id, list_name):
         return datetime.fromtimestamp(int(ms) / 1000, tz=timezone.utc).isoformat()
 
     return {
-        \"id\":           task[\"id\"],
-        \"name\":         task.get(\"name\", \"\"),
-        \"status\":       task.get(\"status\", {}).get(\"status\", \"\"),
-        \"assignees\":    json.dumps(assignees),
-        \"space_id\":     space_id,
-        \"space_name\":   space_name,
-        \"list_id\":      list_id,
-        \"list_name\":    list_name,
-        \"due_date\":     ts(task.get(\"due_date\")),
-        \"start_date\":   ts(task.get(\"start_date\")),
-        \"date_created\": ts(task.get(\"date_created\")),
-        \"date_updated\": ts(task.get(\"date_updated\")),
-        \"synced_at\":    datetime.now(tz=timezone.utc).isoformat(),
+        "id":           task["id"],
+        "name":         task.get("name", ""),
+        "status":       task.get("status", {}).get("status", ""),
+        "assignees":    json.dumps(assignees),
+        "space_id":     space_id,
+        "space_name":   space_name,
+        "list_id":      list_id,
+        "list_name":    list_name,
+        "due_date":     ts(task.get("due_date")),
+        "start_date":   ts(task.get("start_date")),
+        "date_created": ts(task.get("date_created")),
+        "date_updated": ts(task.get("date_updated")),
+        "synced_at":    datetime.now(tz=timezone.utc).isoformat(),
     }
-
-def get_subtasks(task_id):
-    r = requests.get(f\"https://api.clickup.com/api/v2/task/{task_id}?include_subtasks=true\", headers=CLICKUP_HEADERS)
-    r.raise_for_status()
-    return r.json().get(\"subtasks\", [])
-
-def sync_vsl_subtasks():
-    print(\"  🎬 Sync VSL: subtasks da lista Ofertas\")
-    page = 0
-    total = 0
-    vsl_keywords = [\"vsl\", \"vl's\", \"vls\"]
-
-    while True:
-        tasks_raw, last_page = get_tasks_in_list(OFERTAS_LIST_ID, page)
-
-        for t in tasks_raw:
-            try:
-                subtasks = get_subtasks(t[\"id\"])
-                time.sleep(0.3)
-                for sub in subtasks:
-                    name_lower = sub.get(\"name\", \"\").lower()
-                    if not any(kw in name_lower for kw in vsl_keywords):
-                        continue
-                    # Busca detalhes completos da subtask
-                    detail = get_task_detail(sub[\"id\"])
-                    time.sleep(0.3)
-                    parsed = parse_task(detail, \"\", \"Prod. Ofertas\", OFERTAS_LIST_ID, \"Ofertas\")
-                    upsert_tasks([parsed])
-                    total += 1
-                    print(f\"  📹 VSL: {sub.get('name', '')[:50]}\")
-            except Exception as e:
-                print(f\"  ⚠️  Erro subtasks task {t['id']}: {e}\")
-
-        if last_page or not tasks_raw:
-            break
-        page += 1
-        time.sleep(0.5)
-
-    print(f\"  ✅ VSL subtasks: {total} sincronizadas\")
 
 # ── Supabase upsert ────────────────────────────────────────
 
@@ -161,7 +127,6 @@ def sync_novos_criativos():
         for t in tasks_raw:
             p = parse_task(t, "", "Tráfego", NOVOS_CRIATIVOS_LIST_ID, "Novos criativos")
 
-            # Se due_date vier null, busca individualmente
             if p["due_date"] is None:
                 try:
                     detail = get_task_detail(t["id"])
@@ -187,6 +152,41 @@ def sync_novos_criativos():
 
     print(f"  ✅ Novos criativos: {total} tasks | {recuperados} due_dates recuperados")
 
+# ── Sync subtasks VSL da lista Ofertas ────────────────────
+
+def sync_vsl_subtasks():
+    print("  🎬 Sync VSL: subtasks da lista Ofertas")
+    page = 0
+    total = 0
+    vsl_keywords = ["vsl", "vl's", "vls"]
+
+    while True:
+        tasks_raw, last_page = get_tasks_in_list(OFERTAS_LIST_ID, page)
+
+        for t in tasks_raw:
+            try:
+                subtasks = get_subtasks(t["id"])
+                time.sleep(0.3)
+                for sub in subtasks:
+                    name_lower = sub.get("name", "").lower()
+                    if not any(kw in name_lower for kw in vsl_keywords):
+                        continue
+                    detail = get_task_detail(sub["id"])
+                    time.sleep(0.3)
+                    parsed = parse_task(detail, "", "Prod. Ofertas", OFERTAS_LIST_ID, "Ofertas")
+                    upsert_tasks([parsed])
+                    total += 1
+                    print(f"  📹 VSL: {sub.get('name', '')[:50]}")
+            except Exception as e:
+                print(f"  ⚠️  Erro subtasks task {t['id']}: {e}")
+
+        if last_page or not tasks_raw:
+            break
+        page += 1
+        time.sleep(0.5)
+
+    print(f"  ✅ VSL subtasks: {total} sincronizadas")
+
 # ── Full sync ──────────────────────────────────────────────
 
 def full_sync():
@@ -194,10 +194,7 @@ def full_sync():
     teams = get_teams()
     total = 0
 
-    # Sync especial para Novos criativos primeiro
     sync_novos_criativos()
-
-    # Sync subtasks VSL
     sync_vsl_subtasks()
 
     for team in teams:
