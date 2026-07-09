@@ -465,18 +465,33 @@ const VSL_EDITORS = [
   { id: 89362557, label: "Vitu",        initials: "VI", color: "#9b59b6" },
 ];
 
-async function loadVSLOfertas() {
-  // Busca todas as tasks VSL da lista Ofertas que NÃO estão closed e têm due_date
+async function loadVSLOfertas(dtStart, dtEnd) {
+  const startISO = new Date(dtStart + "T00:00:00Z").toISOString();
+  const endISO = new Date(dtEnd + "T23:59:59Z").toISOString();
+
   let tasks = [];
   try {
-    const url = SUPABASE_URL + "/rest/v1/tasks?apikey=" + SUPABASE_KEY
+    // Busca tasks VSL: due_date >= dtStart (não fechadas) OU due_date dentro do período (fechadas)
+    const urlAtivas = SUPABASE_URL + "/rest/v1/tasks?apikey=" + SUPABASE_KEY
       + "&list_id=eq." + VSL_OFERTAS_LIST_ID
       + "&status=neq.closed"
+      + "&due_date=gte." + startISO
       + "&due_date=not.is.null"
       + "&select=id,name,status,assignees,due_date";
-    const r = await fetch(url, { headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY } });
-    tasks = await r.json();
-    if (!Array.isArray(tasks)) return [];
+
+    const urlFechadas = SUPABASE_URL + "/rest/v1/tasks?apikey=" + SUPABASE_KEY
+      + "&list_id=eq." + VSL_OFERTAS_LIST_ID
+      + "&status=eq.closed"
+      + "&due_date=gte." + startISO + "&due_date=lte." + endISO
+      + "&select=id,name,status,assignees,due_date";
+
+    const [r1, r2] = await Promise.all([
+      fetch(urlAtivas, { headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY } }),
+      fetch(urlFechadas, { headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY } })
+    ]);
+
+    const [t1, t2] = await Promise.all([r1.json(), r2.json()]);
+    tasks = [...(Array.isArray(t1) ? t1 : []), ...(Array.isArray(t2) ? t2 : [])];
   } catch (e) {
     console.error(e);
     return [];
@@ -583,7 +598,7 @@ async function loadVSL() {
   }).join('');
 
   // Seção VSL de Ofertas
-  const vslOfertasPessoas = await loadVSLOfertas();
+  const vslOfertasPessoas = await loadVSLOfertas(dtStart, dtEnd);
   let vslOfertasSection = document.getElementById('vsl-ofertas-section');
   if (!vslOfertasSection) {
     vslOfertasSection = document.createElement('div');
