@@ -1026,11 +1026,14 @@ const RAILWAY_SYNC_URL = "COLE_AQUI_A_URL_PUBLICA_DO_RAILWAY";
 const RAILWAY_SYNC_TOKEN = "mamba2026dash";
 
 function recarregarPaginaAtual() {
-  if (currentMain === 'edicao') { if (currentSub === 'vsl') loadVSL(); else loadAds(); }
-  else if (currentMain === 'copy') loadCopy();
-  else if (currentMain === 'estrategico') loadEstrategico();
-  else if (currentMain === 'otimizacao') loadOtimizacao();
-  else if (currentMain === 'criativos') loadCriativos();
+  loadAds();
+  loadVSL();
+  loadCopy();
+  loadEstrategico();
+  loadOtimizacao();
+  if (usuarioLogado && usuarioLogado.email && EMAILS_COM_ACESSO_CRIATIVOS.includes(usuarioLogado.email.toLowerCase())) {
+    loadCriativos();
+  }
 }
 
 async function aguardarRailwayOcioso(tentativas) {
