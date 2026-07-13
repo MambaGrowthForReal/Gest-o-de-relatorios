@@ -1,13 +1,16 @@
 import os
 import time
 import json
+import threading
 import requests
 from datetime import datetime, timezone
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # ── Configurações ──────────────────────────────────────────
 CLICKUP_TOKEN = os.getenv("CLICKUP_TOKEN")
 SUPABASE_URL  = os.getenv("SUPABASE_URL")
 SUPABASE_KEY  = os.getenv("SUPABASE_KEY")
+SYNC_TRIGGER_TOKEN = os.getenv("SYNC_TRIGGER_TOKEN", "mamba2026dash")
 
 POLL_INTERVAL_HOURS = 6
 NOVOS_CRIATIVOS_LIST_ID = "901700896208"
@@ -221,14 +224,81 @@ def full_sync():
 
     print(f"✅ Sync completo — {total} tarefas processadas\n")
 
+# ── Servidor HTTP para disparo manual do sync ──────────────
+
+sync_em_andamento = False
+sync_lock = threading.Lock()
+
+def rodar_full_sync_protegido():
+    global sync_em_andamento
+    with sync_lock:
+        if sync_em_andamento:
+            return False
+        sync_em_andamento = True
+    try:
+        full_sync()
+    except Exception as e:
+        print(f"❌ Erro no sync: {e}")
+    finally:
+        sync_em_andamento = False
+    return True
+
+class SyncTriggerHandler(BaseHTTPRequestHandler):
+    def _cors(self):
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Headers", "x-sync-token")
+        self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self._cors()
+        self.end_headers()
+
+    def do_GET(self):
+        if self.path.startswith("/sync"):
+            token = self.headers.get("x-sync-token", "")
+            if token != SYNC_TRIGGER_TOKEN:
+                self.send_response(401)
+                self._cors()
+                self.end_headers()
+                self.wfile.write(b"unauthorized")
+                return
+            if sync_em_andamento:
+                self.send_response(409)
+                self._cors()
+                self.end_headers()
+                self.wfile.write(b"sync ja em andamento")
+                return
+            threading.Thread(target=rodar_full_sync_protegido, daemon=True).start()
+            self.send_response(200)
+            self._cors()
+            self.end_headers()
+            self.wfile.write(b"sync iniciado")
+        elif self.path.startswith("/status"):
+            self.send_response(200)
+            self._cors()
+            self.end_headers()
+            self.wfile.write(b"em_andamento" if sync_em_andamento else b"ocioso")
+        else:
+            self.send_response(404)
+            self._cors()
+            self.end_headers()
+
+    def log_message(self, format, *args):
+        pass  # silencia logs de HTTP no console do Railway
+
+def iniciar_servidor_http():
+    port = int(os.getenv("PORT", 8080))
+    server = HTTPServer(("0.0.0.0", port), SyncTriggerHandler)
+    print(f"🌐 Servidor de trigger ouvindo na porta {port}")
+    server.serve_forever()
+
 # ── Loop principal ─────────────────────────────────────────
 
 if __name__ == "__main__":
     print("🚀 ClickUp Sync iniciado")
+    threading.Thread(target=iniciar_servidor_http, daemon=True).start()
     while True:
-        try:
-            full_sync()
-        except Exception as e:
-            print(f"❌ Erro no sync: {e}")
+        rodar_full_sync_protegido()
         print(f"⏳ Próximo sync em {POLL_INTERVAL_HOURS}h...")
         time.sleep(POLL_INTERVAL_HOURS * 3600)
