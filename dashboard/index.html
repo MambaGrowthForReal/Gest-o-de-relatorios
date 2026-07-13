@@ -148,6 +148,9 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
     <label>At&eacute;</label>
     <input type="date" id="dtEnd">
     <button class="btn-apply" onclick="applyFilter()">Aplicar</button>
+    <button id="btnAtualizarTudo" onclick="atualizarTudo()" style="background:#1D9E75;color:#fff;border:none;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;margin-left:8px;">
+      <span id="btnAtualizarTudoLabel">Atualizar tudo</span>
+    </button>
     <span id="userLabel" style="font-size:12px;color:rgba(255,255,255,.5);margin-left:12px;"></span>
     <button onclick="fazerLogout()" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);border:none;border-radius:7px;padding:6px 12px;font-size:11px;cursor:pointer;margin-left:6px;">Sair</button>
   </div>
@@ -260,11 +263,6 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
 <!-- CRIATIVOS -->
 <div class="page" id="page-criativos">
   <div style="margin-top:8px;">
-    <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
-      <button id="btnAtualizarCriativos" onclick="atualizarCriativosAgora()" style="background:#1D9E75;color:#fff;border:none;border-radius:7px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;">
-        <span id="btnAtualizarCriativosLabel">Atualizar dados</span>
-      </button>
-    </div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;">
       <div class="kpi-card">
         <div class="kpi-label">TESTADOS</div>
@@ -390,11 +388,13 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
 
 <script>
 let currentSub = 'ads';
+let currentMain = 'edicao';
 
 function selectMain(key, btn) {
   if (key === 'criativos' && !(usuarioLogado && usuarioLogado.email && EMAILS_COM_ACESSO_CRIATIVOS.includes(usuarioLogado.email.toLowerCase()))) {
     return;
   }
+  currentMain = key;
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   const sub = document.getElementById('navSub');
@@ -1020,19 +1020,49 @@ function renderEstrategico() {
   }).join('');
 }
 
-// ── Criativos ─────────────────────────────────────────────
+// ── Atualização geral (ClickUp/tasks + Planilhas de Criativos) ──
 const APPS_SCRIPT_SYNC_URL = "https://script.google.com/a/macros/mambatreinamentos.com/s/AKfycbxMViBC7KdsH6h_WN3zIWVaD6Qgy2-h-feWC_WCmrfjaGKLptBkmCZuPVBegl1KX2kn/exec";
+const RAILWAY_SYNC_URL = "COLE_AQUI_A_URL_PUBLICA_DO_RAILWAY";
+const RAILWAY_SYNC_TOKEN = "mamba2026dash";
 
-async function atualizarCriativosAgora() {
-  const btn = document.getElementById('btnAtualizarCriativos');
-  const label = document.getElementById('btnAtualizarCriativosLabel');
+function recarregarPaginaAtual() {
+  if (currentMain === 'edicao') { if (currentSub === 'vsl') loadVSL(); else loadAds(); }
+  else if (currentMain === 'copy') loadCopy();
+  else if (currentMain === 'estrategico') loadEstrategico();
+  else if (currentMain === 'otimizacao') loadOtimizacao();
+  else if (currentMain === 'criativos') loadCriativos();
+}
+
+async function aguardarRailwayOcioso(tentativas) {
+  for (let i = 0; i < tentativas; i++) {
+    await new Promise(r => setTimeout(r, 5000));
+    try {
+      const r = await fetch(RAILWAY_SYNC_URL + '/status');
+      const texto = (await r.text()).trim();
+      if (texto === 'ocioso') return true;
+    } catch(e) { /* Railway pode estar demorando a responder, segue tentando */ }
+  }
+  return false;
+}
+
+async function atualizarTudo() {
+  const btn = document.getElementById('btnAtualizarTudo');
+  const label = document.getElementById('btnAtualizarTudoLabel');
   btn.disabled = true;
   btn.style.opacity = '0.6';
   label.textContent = 'Atualizando...';
+
   try {
-    await fetch(APPS_SCRIPT_SYNC_URL, { mode: 'no-cors' });
-    label.textContent = 'Atualizado!';
-    await loadCriativos();
+    // Dispara os dois syncs em paralelo: planilhas de Criativos (rápido) e ClickUp (mais lento)
+    const syncCriativosPromise = fetch(APPS_SCRIPT_SYNC_URL, { mode: 'no-cors' }).catch(e => console.error('Erro Apps Script:', e));
+    const syncClickUpPromise = fetch(RAILWAY_SYNC_URL + '/sync', { headers: { 'x-sync-token': RAILWAY_SYNC_TOKEN } }).catch(e => console.error('Erro Railway:', e));
+    await Promise.all([syncCriativosPromise, syncClickUpPromise]);
+
+    label.textContent = 'Sincronizando ClickUp...';
+    const concluiu = await aguardarRailwayOcioso(36); // espera até ~3 minutos
+
+    recarregarPaginaAtual();
+    label.textContent = concluiu ? 'Atualizado!' : 'Ainda sincronizando, tente de novo em instantes';
   } catch(e) {
     console.error(e);
     label.textContent = 'Erro ao atualizar';
@@ -1040,8 +1070,8 @@ async function atualizarCriativosAgora() {
     setTimeout(() => {
       btn.disabled = false;
       btn.style.opacity = '1';
-      label.textContent = 'Atualizar dados';
-    }, 3000);
+      label.textContent = 'Atualizar tudo';
+    }, 5000);
   }
 }
 
