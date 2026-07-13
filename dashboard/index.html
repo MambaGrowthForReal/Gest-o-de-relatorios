@@ -1021,7 +1021,7 @@ function renderEstrategico() {
 }
 
 // ── Criativos ─────────────────────────────────────────────
-const APPS_SCRIPT_SYNC_URL = "COLE_AQUI_A_URL_DO_WEB_APP";
+const APPS_SCRIPT_SYNC_URL = "https://script.google.com/a/macros/mambatreinamentos.com/s/AKfycbxMViBC7KdsH6h_WN3zIWVaD6Qgy2-h-feWC_WCmrfjaGKLptBkmCZuPVBegl1KX2kn/exec";
 
 async function atualizarCriativosAgora() {
   const btn = document.getElementById('btnAtualizarCriativos');
@@ -1030,8 +1030,7 @@ async function atualizarCriativosAgora() {
   btn.style.opacity = '0.6';
   label.textContent = 'Atualizando...';
   try {
-    const r = await fetch(APPS_SCRIPT_SYNC_URL);
-    const texto = await r.text();
+    await fetch(APPS_SCRIPT_SYNC_URL, { mode: 'no-cors' });
     label.textContent = 'Atualizado!';
     await loadCriativos();
   } catch(e) {
