@@ -158,7 +158,7 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
   <button class="nav-btn" onclick="selectMain('copy',this)">Copy</button>
   <button class="nav-btn" onclick="selectMain('estrategico',this)">Estrat&eacute;gico</button>
   <button class="nav-btn" onclick="selectMain('otimizacao',this)">Otimiza&ccedil;&atilde;o de Funil</button>
-  <button class="nav-btn" onclick="selectMain('criativos',this)">Criativos</button>
+  <button class="nav-btn" id="navBtnCriativos" onclick="selectMain('criativos',this)">Criativos</button>
   <button class="nav-btn" onclick="selectMain('cs',this)">CS</button>
 </div>
 
@@ -260,6 +260,11 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
 <!-- CRIATIVOS -->
 <div class="page" id="page-criativos">
   <div style="margin-top:8px;">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+      <button id="btnAtualizarCriativos" onclick="atualizarCriativosAgora()" style="background:#1D9E75;color:#fff;border:none;border-radius:7px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;">
+        <span id="btnAtualizarCriativosLabel">Atualizar dados</span>
+      </button>
+    </div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;">
       <div class="kpi-card">
         <div class="kpi-label">TESTADOS</div>
@@ -387,6 +392,9 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
 let currentSub = 'ads';
 
 function selectMain(key, btn) {
+  if (key === 'criativos' && !(usuarioLogado && usuarioLogado.email && EMAILS_COM_ACESSO_CRIATIVOS.includes(usuarioLogado.email.toLowerCase()))) {
+    return;
+  }
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   const sub = document.getElementById('navSub');
@@ -1013,6 +1021,31 @@ function renderEstrategico() {
 }
 
 // ── Criativos ─────────────────────────────────────────────
+const APPS_SCRIPT_SYNC_URL = "COLE_AQUI_A_URL_DO_WEB_APP";
+
+async function atualizarCriativosAgora() {
+  const btn = document.getElementById('btnAtualizarCriativos');
+  const label = document.getElementById('btnAtualizarCriativosLabel');
+  btn.disabled = true;
+  btn.style.opacity = '0.6';
+  label.textContent = 'Atualizando...';
+  try {
+    const r = await fetch(APPS_SCRIPT_SYNC_URL);
+    const texto = await r.text();
+    label.textContent = 'Atualizado!';
+    await loadCriativos();
+  } catch(e) {
+    console.error(e);
+    label.textContent = 'Erro ao atualizar';
+  } finally {
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      label.textContent = 'Atualizar dados';
+    }, 3000);
+  }
+}
+
 async function loadCriativos() {
   const grid = document.getElementById('criativosGrid');
   if (!grid) return;
@@ -1462,6 +1495,7 @@ async function fazerLogin() {
     const data = await r.json();
     if (!data || !data.length) { erro.style.display = 'block'; return; }
     usuarioLogado = data[0];
+    usuarioLogado.email = email;
     localStorage.setItem('mamba_user', JSON.stringify({ email, senhaHash, nome: usuarioLogado.nome, perfil: usuarioLogado.perfil }));
     entrarNoDashboard();
   } catch(e) { console.error(e); erro.style.display = 'block'; }
@@ -1472,7 +1506,16 @@ function entrarNoDashboard() {
   document.getElementById('dashboardScreen').style.display = 'block';
   const userEl = document.getElementById('userLabel');
   if (userEl) userEl.textContent = usuarioLogado.nome;
+  aplicarPermissoes();
   loadAds();
+}
+
+const EMAILS_COM_ACESSO_CRIATIVOS = ['gustavo@mambatreinamentos.com'];
+
+function aplicarPermissoes() {
+  const btnCriativos = document.getElementById('navBtnCriativos');
+  const temAcessoCriativos = usuarioLogado && usuarioLogado.email && EMAILS_COM_ACESSO_CRIATIVOS.includes(usuarioLogado.email.toLowerCase());
+  if (btnCriativos) btnCriativos.style.display = temAcessoCriativos ? '' : 'none';
 }
 
 async function verificarSessao() {
@@ -1486,6 +1529,7 @@ async function verificarSessao() {
     const data = await r.json();
     if (data && data.length) {
       usuarioLogado = data[0];
+      usuarioLogado.email = s.email;
       entrarNoDashboard();
     } else {
       localStorage.removeItem('mamba_user');
