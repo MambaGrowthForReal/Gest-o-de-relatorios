@@ -282,6 +282,7 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
         <div class="kpi-value" id="criativosEmTeste">--</div>
       </div>
     </div>
+    <div id="criativosPorTipo" style="display:flex;gap:24px;margin-bottom:20px;font-size:12px;color:rgba(255,255,255,.5);"></div>
     <div class="sec-label" style="margin-bottom:12px;">Valida&ccedil;&atilde;o por Copy</div>
     <div id="criativosGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;"></div>
   </div>
@@ -1105,6 +1106,19 @@ async function loadCriativos() {
     document.getElementById('criativosPct').textContent = pct + '%';
     document.getElementById('criativosPctFill').style.width = pct + '%';
     document.getElementById('criativosEmTeste').textContent = emTeste;
+
+    const porTipoEl = document.getElementById('criativosPorTipo');
+    if (porTipoEl) {
+      const tipos = ['video', 'imagem'];
+      const labels = { video: 'Vídeo', imagem: 'Imagem' };
+      porTipoEl.innerHTML = tipos.map(tipo => {
+        const doTipo = comData.filter(c => (c.tipo || 'video') === tipo);
+        const testadosTipo = doTipo.length;
+        const validadosTipo = doTipo.filter(c => c.status === 'validado').length;
+        const pctTipo = testadosTipo > 0 ? Math.round((validadosTipo / testadosTipo) * 100) : 0;
+        return `<span><strong style="color:#fff;">${labels[tipo]}:</strong> ${testadosTipo} testados · <span style="color:#1D9E75;">${pctTipo}% validado</span></span>`;
+      }).join('');
+    }
 
     const porCopy = {};
     data.forEach(c => {
