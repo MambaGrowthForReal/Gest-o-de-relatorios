@@ -79,6 +79,9 @@ def get_subtasks(task_id):
 def parse_task(task, space_id, space_name, list_id, list_name, folder_id=None, folder_name=None):
     assignees = [{"id": a["id"], "username": a.get("username", ""), "email": a.get("email", "")} for a in task.get("assignees", [])]
 
+    creator_raw = task.get("creator") or {}
+    creator = {"id": creator_raw.get("id"), "username": creator_raw.get("username", ""), "email": creator_raw.get("email", "")} if creator_raw else None
+
     def ts(ms):
         if not ms:
             return None
@@ -89,6 +92,7 @@ def parse_task(task, space_id, space_name, list_id, list_name, folder_id=None, f
         "name":         task.get("name", ""),
         "status":       task.get("status", {}).get("status", ""),
         "assignees":    json.dumps(assignees),
+        "creator":      json.dumps(creator) if creator else None,
         "space_id":     space_id,
         "space_name":   space_name,
         "list_id":      list_id,
