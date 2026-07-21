@@ -1196,7 +1196,7 @@ async function loadCriativos() {
       const testadosCopy = comDataCopy.length;
       const validadosCopy = comDataCopy.filter(c => c.status === 'validado').length;
       const pctCopy = testadosCopy > 0 ? (validadosCopy / testadosCopy) * 100 : 0;
-      const corPct = pctCopy >= 30 ? '#1D9E75' : pctCopy >= 20 ? '#c9a84c' : '#e74c3c';
+      const corPct = testadosCopy === 0 ? 'rgba(255,255,255,.35)' : pctCopy >= 30 ? '#1D9E75' : pctCopy >= 20 ? '#c9a84c' : '#e74c3c';
 
       const videoItems = comDataCopy.filter(c => (c.tipo || 'video') === 'video');
       const imagemItems = comDataCopy.filter(c => (c.tipo || 'video') === 'imagem');
@@ -1212,7 +1212,7 @@ async function loadCriativos() {
           <div style="width:34px;height:34px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;">${initials}</div>
           <div>
             <div style="font-size:13px;font-weight:700;color:#fff;">${copy}</div>
-            <div style="font-size:11px;color:${corPct};font-weight:600;">${pctCopy.toFixed(2)}% validado</div>
+            <div style="font-size:11px;color:${corPct};font-weight:600;">${testadosCopy > 0 ? pctCopy.toFixed(2) + '% validado' : 'Sem dados no período'}</div>
           </div>
         </div>
         <div style="background:rgba(255,255,255,.04);border-radius:6px;overflow:hidden;margin-bottom:12px;">
@@ -1238,6 +1238,7 @@ async function loadCriativos() {
           </tr></thead>
           <tbody>${linhasImagem}</tbody>
         </table>` : ''}
+        ${(!linhasVideo && !linhasImagem) ? `<div style="font-size:11px;color:rgba(255,255,255,.35);">Sem criativos finalizados neste período (só em teste).</div>` : ''}
       </div>`;
     }).join('');
 
