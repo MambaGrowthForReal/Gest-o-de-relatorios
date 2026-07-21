@@ -75,25 +75,18 @@ def get_subtasks(task_id):
     r.raise_for_status()
     return r.json().get("subtasks", [])
 
-def get_data_em_edicao(task_id):
-    """Consulta o histórico de status da task e retorna o timestamp (ISO) de quando
-    ela entrou em 'em edição' — usado para marcar fim do copy / início do editor."""
-    r = requests.get(f"https://api.clickup.com/api/v2/task/{task_id}/time_in_status", headers=CLICKUP_HEADERS)
+TIKTOK_STATUS_A_PARTIR_DE_EDICAO = ['em edição', 'aprovação', 'agendamento do post', 'post agendado', 'publicado', 'complete']
+
+def get_tiktok_data_em_edicao_existente():
+    """Busca no Supabase o que já está salvo (status + data_em_edicao) para as tasks
+    da pasta TikTok, para não perder o timestamp já detectado em syncs anteriores."""
+    r = requests.get(
+        f"{SUPABASE_URL}/rest/v1/tasks",
+        headers=SUPABASE_HEADERS,
+        params={"folder_id": f"eq.{TIKTOK_FOLDER_ID}", "select": "id,data_em_edicao"},
+    )
     r.raise_for_status()
-    data = r.json()
-
-    candidatos = []
-    if data.get("current_status"):
-        candidatos.append(data["current_status"])
-    candidatos += data.get("status_history", [])
-
-    for item in candidatos:
-        status_nome = (item.get("status") or "").lower().strip()
-        if status_nome == "em edição":
-            since_ms = item.get("total_time", {}).get("since")
-            if since_ms:
-                return datetime.fromtimestamp(int(since_ms) / 1000, tz=timezone.utc).isoformat()
-    return None
+    return {row["id"]: row.get("data_em_edicao") for row in r.json()}
 
 # ── Parser de tarefa ───────────────────────────────────────
 
@@ -228,6 +221,12 @@ def full_sync():
     sync_novos_criativos()
     sync_vsl_subtasks()
 
+    try:
+        tiktok_existentes = get_tiktok_data_em_edicao_existente()
+    except Exception as e:
+        print(f"  ⚠️  Erro ao buscar dados existentes do TikTok: {e}")
+        tiktok_existentes = {}
+
     for team in teams:
         spaces = get_spaces(team["id"])
         for space in spaces:
@@ -245,11 +244,14 @@ def full_sync():
                     for t in tasks_raw:
                         p = parse_task(t, sid, sname, lid, lname, fid, fname)
                         if fid == TIKTOK_FOLDER_ID:
-                            try:
-                                p["data_em_edicao"] = get_data_em_edicao(t["id"])
-                                time.sleep(0.3)
-                            except Exception as e:
-                                print(f"  ⚠️  Erro time_in_status task {t['id']}: {e}")
+                            ja_tinha = tiktok_existentes.get(t["id"])
+                            status_atual = (p["status"] or "").lower().strip()
+                            if ja_tinha:
+                                p["data_em_edicao"] = ja_tinha
+                            elif status_atual in TIKTOK_STATUS_A_PARTIR_DE_EDICAO:
+                                p["data_em_edicao"] = p["date_updated"] or p["synced_at"]
+                            else:
+                                p["data_em_edicao"] = None
                         parsed.append(p)
                     upsert_tasks(parsed)
                     total += len(parsed)
