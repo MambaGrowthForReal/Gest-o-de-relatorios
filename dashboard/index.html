@@ -826,7 +826,7 @@ async function loadCopyTiktok() {
     const url = SUPABASE_URL + "/rest/v1/tasks?apikey=" + SUPABASE_KEY
       + "&folder_id=eq." + TIKTOK_FOLDER_ID
       + "&date_created=gte." + startISO + "&date_created=lte." + endISO
-      + "&select=id,name,status,assignees";
+      + "&select=id,name,status,assignees,creator";
     const r = await fetch(url, { headers: SUPABASE_HEADERS });
     tasks = await r.json();
     if (!Array.isArray(tasks)) throw new Error("Resposta inesperada do Supabase");
@@ -838,9 +838,9 @@ async function loadCopyTiktok() {
 
   const results = TIKTOK_EDITORS.map(ed => {
     const doEditor = tasks.filter(t => {
-      let ass = [];
-      try { ass = JSON.parse(t.assignees || '[]'); } catch (e) {}
-      return ass.some(a => a.id === ed.id);
+      let criador = null;
+      try { criador = JSON.parse(t.creator || 'null'); } catch (e) {}
+      return criador && criador.id === ed.id;
     });
 
     const total = doEditor.length;
