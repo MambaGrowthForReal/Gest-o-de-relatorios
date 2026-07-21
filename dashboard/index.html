@@ -171,6 +171,11 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
   <button class="nav-sub-btn" onclick="selectSub('vsl',this)">VSL</button>
 </div>
 
+<div class="nav-sub" id="navSubCopy">
+  <button class="nav-sub-btn active" onclick="selectSubCopy('ads',this)">Ads</button>
+  <button class="nav-sub-btn" onclick="selectSubCopy('tiktok',this)">TikTok</button>
+</div>
+
 <!-- ADS -->
 <div class="page active" id="page-ads">
   <div id="adsContent">
@@ -207,7 +212,7 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
 </div>
 
 <!-- COPY -->
-<div class="page" id="page-copy">
+<div class="page" id="page-copy-ads">
   <div class="kpi-row" style="margin-top:8px;">
     <div class="kpi"><div class="kpi-label">Planejados</div><div class="kpi-value" id="copyKpiTotal">--</div><div class="kpi-sub" id="copyKpiSub">carregando...</div></div>
     <div class="kpi"><div class="kpi-label">Entregues</div><div class="kpi-value" id="copyKpiDone">--</div></div>
@@ -226,6 +231,19 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
     </div>
     <div class="plan-history" id="planHistory"></div>
   </div>
+</div>
+
+<!-- COPY TIKTOK -->
+<div class="page" id="page-copy-tiktok">
+  <div class="kpi-row" style="margin-top:8px;">
+    <div class="kpi"><div class="kpi-label">Planejados</div><div class="kpi-value" id="tiktokKpiTotal">--</div><div class="kpi-sub" id="tiktokKpiSub">carregando...</div></div>
+    <div class="kpi"><div class="kpi-label">Entregues</div><div class="kpi-value" id="tiktokKpiDone">--</div></div>
+    <div class="kpi"><div class="kpi-label">Cumprimento</div>
+      <div class="kpi-value" id="tiktokKpiPct" style="color:#c9a84c;">--</div>
+      <div class="pct-track"><div class="pct-fill" id="tiktokKpiPctFill" style="width:0%;background:#c9a84c;"></div></div></div>
+  </div>
+  <div class="sec-label">Performance por Copywriter</div>
+  <div class="editors-grid" id="tiktokEditorsGrid" style="grid-template-columns:repeat(2,1fr);"><div class="sec-label">Carregando dados do Supabase...</div></div>
 </div>
 
 <!-- ESTRATÉGICO --><!-- ESTRATÉGICO -->
@@ -421,6 +439,7 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
 
 <script>
 let currentSub = 'ads';
+let currentSubCopy = 'ads';
 let currentMain = 'edicao';
 
 function selectMain(key, btn) {
@@ -431,9 +450,12 @@ function selectMain(key, btn) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   const sub = document.getElementById('navSub');
+  const subCopy = document.getElementById('navSubCopy');
+  sub.classList.remove('visible');
+  subCopy.classList.remove('visible');
   if (key === 'edicao') { sub.classList.add('visible'); showPage('page-' + currentSub); if (currentSub === 'vsl') loadVSL(); else loadAds(); }
-  else { sub.classList.remove('visible'); showPage('page-' + key); }
-  if (key === 'copy') loadCopy();
+  else if (key === 'copy') { subCopy.classList.add('visible'); showPage('page-copy-' + currentSubCopy); if (currentSubCopy === 'tiktok') loadCopyTiktok(); else loadCopy(); }
+  else { showPage('page-' + key); }
   if (key === 'estrategico') loadEstrategico();
   if (key === 'otimizacao') loadOtimizacao();
   if (key === 'criativos') loadCriativos();
@@ -441,11 +463,20 @@ function selectMain(key, btn) {
 
 function selectSub(key, btn) {
   currentSub = key;
-  document.querySelectorAll('.nav-sub-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#navSub .nav-sub-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   showPage('page-' + key);
   if (key === 'vsl') loadVSL();
   if (key === 'ads') loadAds();
+}
+
+function selectSubCopy(key, btn) {
+  currentSubCopy = key;
+  document.querySelectorAll('#navSubCopy .nav-sub-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  showPage('page-copy-' + key);
+  if (key === 'tiktok') loadCopyTiktok();
+  if (key === 'ads') loadCopy();
 }
 
 function showPage(id) {
@@ -766,6 +797,79 @@ const COPY_EDITORS = [
   { id: 89362036,  label: "Bianca",   initials: "BI", color: "#9b59b6" },
   { id: 81795840,  label: "Nicollas", initials: "NI", color: "#e74c3c" },
 ];
+
+const TIKTOK_FOLDER_ID = "90179850327";
+const TIKTOK_EDITORS = [
+  { id: 236447148, label: "Lavínia", initials: "LA", color: "#c9a84c" },
+  { id: 89362036,  label: "Bianca",  initials: "BI", color: "#9b59b6" },
+];
+
+async function loadCopyTiktok() {
+  const dtStartEl = document.getElementById('dtStart');
+  const dtEndEl = document.getElementById('dtEnd');
+  if (!dtEndEl.value) { dtEndEl.valueAsDate = new Date(); }
+  const dtStart = dtStartEl.value;
+  const dtEnd = dtEndEl.value;
+  if (!dtStart || !dtEnd) return;
+
+  const startISO = new Date(dtStart + "T00:00:00Z").toISOString();
+  const endISO = new Date(dtEnd + "T23:59:59Z").toISOString();
+
+  const grid = document.getElementById('tiktokEditorsGrid');
+  grid.innerHTML = '<div class="sec-label">Carregando dados do Supabase...</div>';
+  document.getElementById('tiktokKpiSub').textContent = 'carregando...';
+
+  let tasks = [];
+  try {
+    const url = SUPABASE_URL + "/rest/v1/tasks?apikey=" + SUPABASE_KEY
+      + "&folder_id=eq." + TIKTOK_FOLDER_ID
+      + "&date_created=gte." + startISO + "&date_created=lte." + endISO
+      + "&select=id,name,status,assignees";
+    const r = await fetch(url, { headers: SUPABASE_HEADERS });
+    tasks = await r.json();
+    if (!Array.isArray(tasks)) throw new Error("Resposta inesperada do Supabase");
+  } catch (e) {
+    grid.innerHTML = '<div class="sec-label">Erro ao buscar dados do Supabase. Tenta de novo em alguns segundos.</div>';
+    console.error(e);
+    return;
+  }
+
+  const results = TIKTOK_EDITORS.map(ed => {
+    const doEditor = tasks.filter(t => {
+      let ass = [];
+      try { ass = JSON.parse(t.assignees || '[]'); } catch (e) {}
+      return ass.some(a => a.id === ed.id);
+    });
+
+    const total = doEditor.length;
+    const done = doEditor.filter(t => t.status === 'complete').length;
+    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+    return Object.assign({}, ed, { total, done, pct });
+  })
+  .filter(r => r.total > 0);
+
+  const totalGeral = results.reduce((s, r) => s + r.total, 0);
+  const doneGeral = results.reduce((s, r) => s + r.done, 0);
+  const pctGeral = totalGeral > 0 ? Math.round((doneGeral / totalGeral) * 100) : 0;
+
+  document.getElementById('tiktokKpiTotal').textContent = totalGeral;
+  document.getElementById('tiktokKpiSub').textContent = fmtDataBR(dtStart) + ' – ' + fmtDataBR(dtEnd);
+  document.getElementById('tiktokKpiDone').textContent = doneGeral;
+  document.getElementById('tiktokKpiPct').textContent = pctGeral + '%';
+  document.getElementById('tiktokKpiPct').style.color = corPerformance(pctGeral);
+  document.getElementById('tiktokKpiPctFill').style.width = pctGeral + '%';
+  document.getElementById('tiktokKpiPctFill').style.background = corPerformance(pctGeral);
+
+  if (results.length === 0) {
+    grid.innerHTML = '<div class="sec-label">Nenhum v&iacute;deo com cria&ccedil;&atilde;o nesse per&iacute;odo.</div>';
+  } else {
+    grid.innerHTML = results.map(r => {
+      const cor = corPerformance(r.pct);
+      const tc = r.color === "#c9a84c" ? "#000" : "#fff";
+      return '<div class="ecard"><div class="ehead"><div class="eavatar" style="background:' + r.color + ';color:' + tc + ';">' + r.initials + '</div><div><div class="ename">' + r.label + '</div><div class="erole">TikTok</div></div></div><div class="estats"><div><div class="eads-label">Entregues</div><div class="evideos">' + r.done + '</div><div class="evideos-sub">de ' + r.total + ' planejados</div></div><div><div class="epct-val" style="color:' + cor + ';">' + r.pct + '%</div><div class="epct-sub">cumprimento</div></div></div><div class="ebar-track"><div class="ebar-fill" style="width:' + r.pct + '%;background:' + cor + ';"></div></div></div>';
+    }).join('');
+  }
+}
 
 async function loadCopy() {
   const dtStartEl = document.getElementById('dtStart');
