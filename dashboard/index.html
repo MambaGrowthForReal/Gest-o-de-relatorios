@@ -1131,29 +1131,29 @@ async function loadCriativos() {
     const testados = comData.length;
     const validados = comData.filter(c => c.status === 'validado').length;
     const emTeste = data.filter(c => c.status === 'em_teste').length;
-    const pct = testados > 0 ? Math.round((validados / testados) * 100) : 0;
+    const pct = testados > 0 ? (validados / testados) * 100 : 0;
 
     document.getElementById('criativosTestados').textContent = testados;
     document.getElementById('criativosValidados').textContent = validados;
-    document.getElementById('criativosPct').textContent = pct + '%';
+    document.getElementById('criativosPct').textContent = pct.toFixed(2) + '%';
     document.getElementById('criativosPctFill').style.width = pct + '%';
     document.getElementById('criativosEmTeste').textContent = emTeste;
 
     const imgItems = comData.filter(c => (c.tipo || 'video') === 'imagem');
     const imgTestadas = imgItems.length;
     const imgValidadas = imgItems.filter(c => c.status === 'validado').length;
-    const imgPct = imgTestadas > 0 ? Math.round((imgValidadas / imgTestadas) * 100) : 0;
+    const imgPct = imgTestadas > 0 ? (imgValidadas / imgTestadas) * 100 : 0;
     document.getElementById('criativosImgTestadas').textContent = imgTestadas;
     document.getElementById('criativosImgValidadas').textContent = imgValidadas;
-    document.getElementById('criativosImgPct').textContent = imgPct + '% validado';
+    document.getElementById('criativosImgPct').textContent = imgPct.toFixed(2) + '% validado';
 
     const vidItems = comData.filter(c => (c.tipo || 'video') === 'video');
     const vidTestados = vidItems.length;
     const vidValidados = vidItems.filter(c => c.status === 'validado').length;
-    const vidPct = vidTestados > 0 ? Math.round((vidValidados / vidTestados) * 100) : 0;
+    const vidPct = vidTestados > 0 ? (vidValidados / vidTestados) * 100 : 0;
     document.getElementById('criativosVidTestados').textContent = vidTestados;
     document.getElementById('criativosVidValidados').textContent = vidValidados;
-    document.getElementById('criativosVidPct').textContent = vidPct + '% validado';
+    document.getElementById('criativosVidPct').textContent = vidPct.toFixed(2) + '% validado';
 
     const porCopy = {};
     data.forEach(c => {
@@ -1180,12 +1180,12 @@ async function loadCriativos() {
         if (c.status === 'validado') porProduto[key].validados++;
       });
       return Object.values(porProduto).sort((a,b) => b.testados - a.testados).map(p => {
-        const pctP = p.testados > 0 ? Math.round((p.validados / p.testados) * 100) : 0;
+        const pctP = p.testados > 0 ? (p.validados / p.testados) * 100 : 0;
         const cor = pctP >= 30 ? '#1D9E75' : pctP >= 20 ? '#c9a84c' : '#e74c3c';
         return `<tr>
           <td style="font-size:11px;color:#fff;padding:4px 0;">${p.produto||'—'}${p.idioma ? ` <span style="color:rgba(255,255,255,.3);font-size:10px;">(${p.idioma})</span>` : ''}</td>
           <td style="font-size:11px;color:rgba(255,255,255,.5);text-align:center;padding:4px 0;">${p.testados}</td>
-          <td style="font-size:11px;color:${cor};text-align:center;font-weight:600;padding:4px 0;">${pctP}%</td>
+          <td style="font-size:11px;color:${cor};text-align:center;font-weight:600;padding:4px 0;">${pctP.toFixed(2)}%</td>
         </tr>`;
       }).join('');
     }
@@ -1194,7 +1194,7 @@ async function loadCriativos() {
       const comDataCopy = items.filter(c => c.data_teste);
       const testadosCopy = comDataCopy.length;
       const validadosCopy = comDataCopy.filter(c => c.status === 'validado').length;
-      const pctCopy = testadosCopy > 0 ? Math.round((validadosCopy / testadosCopy) * 100) : 0;
+      const pctCopy = testadosCopy > 0 ? (validadosCopy / testadosCopy) * 100 : 0;
       const corPct = pctCopy >= 30 ? '#1D9E75' : pctCopy >= 20 ? '#c9a84c' : '#e74c3c';
 
       const videoItems = comDataCopy.filter(c => (c.tipo || 'video') === 'video');
@@ -1211,7 +1211,7 @@ async function loadCriativos() {
           <div style="width:34px;height:34px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;">${initials}</div>
           <div>
             <div style="font-size:13px;font-weight:700;color:#fff;">${copy}</div>
-            <div style="font-size:11px;color:${corPct};font-weight:600;">${pctCopy}% validado</div>
+            <div style="font-size:11px;color:${corPct};font-weight:600;">${pctCopy.toFixed(2)}% validado</div>
           </div>
         </div>
         <div style="background:rgba(255,255,255,.04);border-radius:6px;overflow:hidden;margin-bottom:12px;">
@@ -1233,7 +1233,7 @@ async function loadCriativos() {
 function calcPct(items) {
   const comData = items.filter(c => c.data_teste);
   if (!comData.length) return 0;
-  return Math.round((comData.filter(c => c.status === 'validado').length / comData.length) * 100);
+  return (comData.filter(c => c.status === 'validado').length / comData.length) * 100;
 }
 
 // ── Otimização de Funil ───────────────────────────────────
