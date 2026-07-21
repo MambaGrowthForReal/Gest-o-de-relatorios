@@ -1127,7 +1127,7 @@ async function loadCriativos() {
     const r = await fetch(url, { headers: SUPABASE_HEADERS });
     const data = await r.json();
 
-    const comData = data.filter(c => c.data_teste);
+    const comData = data.filter(c => c.data_teste && c.status !== 'em_teste');
     const testados = comData.length;
     const validados = comData.filter(c => c.status === 'validado').length;
     const emTeste = data.filter(c => c.status === 'em_teste').length;
@@ -1185,13 +1185,14 @@ async function loadCriativos() {
         return `<tr>
           <td style="font-size:11px;color:#fff;padding:4px 0;">${p.produto||'—'}${p.idioma ? ` <span style="color:rgba(255,255,255,.3);font-size:10px;">(${p.idioma})</span>` : ''}</td>
           <td style="font-size:11px;color:rgba(255,255,255,.5);text-align:center;padding:4px 0;">${p.testados}</td>
+          <td style="font-size:11px;color:rgba(255,255,255,.5);text-align:center;padding:4px 0;">${p.validados}</td>
           <td style="font-size:11px;color:${cor};text-align:center;font-weight:600;padding:4px 0;">${pctP.toFixed(2)}%</td>
         </tr>`;
       }).join('');
     }
 
     grid.innerHTML = copies.map(([copy, items], idx) => {
-      const comDataCopy = items.filter(c => c.data_teste);
+      const comDataCopy = items.filter(c => c.data_teste && c.status !== 'em_teste');
       const testadosCopy = comDataCopy.length;
       const validadosCopy = comDataCopy.filter(c => c.status === 'validado').length;
       const pctCopy = testadosCopy > 0 ? (validadosCopy / testadosCopy) * 100 : 0;
@@ -1218,9 +1219,25 @@ async function loadCriativos() {
           <div style="height:4px;background:${corPct};width:${pctCopy}%;"></div>
         </div>
         ${linhasVideo ? `<div style="font-size:10px;color:rgba(255,255,255,.65);letter-spacing:.06em;margin-bottom:4px;">VIDEO</div>
-        <table style="width:100%;border-collapse:collapse;margin-bottom:12px;"><tbody>${linhasVideo}</tbody></table>` : ''}
+        <table style="width:100%;border-collapse:collapse;margin-bottom:12px;">
+          <thead><tr>
+            <th style="font-size:9px;font-weight:600;letter-spacing:.06em;color:rgba(255,255,255,.3);text-align:left;padding-bottom:4px;">PRODUTO</th>
+            <th style="font-size:9px;font-weight:600;letter-spacing:.06em;color:rgba(255,255,255,.3);text-align:center;padding-bottom:4px;">TEST.</th>
+            <th style="font-size:9px;font-weight:600;letter-spacing:.06em;color:rgba(255,255,255,.3);text-align:center;padding-bottom:4px;">VALID.</th>
+            <th style="font-size:9px;font-weight:600;letter-spacing:.06em;color:rgba(255,255,255,.3);text-align:center;padding-bottom:4px;">%</th>
+          </tr></thead>
+          <tbody>${linhasVideo}</tbody>
+        </table>` : ''}
         ${linhasImagem ? `<div style="font-size:10px;color:rgba(255,255,255,.65);letter-spacing:.06em;margin-bottom:4px;">IMAGEM</div>
-        <table style="width:100%;border-collapse:collapse;"><tbody>${linhasImagem}</tbody></table>` : ''}
+        <table style="width:100%;border-collapse:collapse;">
+          <thead><tr>
+            <th style="font-size:9px;font-weight:600;letter-spacing:.06em;color:rgba(255,255,255,.3);text-align:left;padding-bottom:4px;">PRODUTO</th>
+            <th style="font-size:9px;font-weight:600;letter-spacing:.06em;color:rgba(255,255,255,.3);text-align:center;padding-bottom:4px;">TEST.</th>
+            <th style="font-size:9px;font-weight:600;letter-spacing:.06em;color:rgba(255,255,255,.3);text-align:center;padding-bottom:4px;">VALID.</th>
+            <th style="font-size:9px;font-weight:600;letter-spacing:.06em;color:rgba(255,255,255,.3);text-align:center;padding-bottom:4px;">%</th>
+          </tr></thead>
+          <tbody>${linhasImagem}</tbody>
+        </table>` : ''}
       </div>`;
     }).join('');
 
@@ -1231,7 +1248,7 @@ async function loadCriativos() {
 }
 
 function calcPct(items) {
-  const comData = items.filter(c => c.data_teste);
+  const comData = items.filter(c => c.data_teste && c.status !== 'em_teste');
   if (!comData.length) return 0;
   return (comData.filter(c => c.status === 'validado').length / comData.length) * 100;
 }
