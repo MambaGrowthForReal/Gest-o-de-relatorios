@@ -15,6 +15,7 @@ SYNC_TRIGGER_TOKEN = os.getenv("SYNC_TRIGGER_TOKEN", "mamba2026dash")
 POLL_INTERVAL_HOURS = 6
 NOVOS_CRIATIVOS_LIST_ID = "901700896208"
 OFERTAS_LIST_ID = "901703341802"
+TIKTOK_FOLDER_ID = "90179850327"
 
 CLICKUP_HEADERS  = {"Authorization": CLICKUP_TOKEN}
 SUPABASE_HEADERS = {
@@ -73,6 +74,26 @@ def get_subtasks(task_id):
     r = requests.get(f"https://api.clickup.com/api/v2/task/{task_id}?include_subtasks=true", headers=CLICKUP_HEADERS)
     r.raise_for_status()
     return r.json().get("subtasks", [])
+
+def get_data_em_edicao(task_id):
+    """Consulta o histórico de status da task e retorna o timestamp (ISO) de quando
+    ela entrou em 'em edição' — usado para marcar fim do copy / início do editor."""
+    r = requests.get(f"https://api.clickup.com/api/v2/task/{task_id}/time_in_status", headers=CLICKUP_HEADERS)
+    r.raise_for_status()
+    data = r.json()
+
+    candidatos = []
+    if data.get("current_status"):
+        candidatos.append(data["current_status"])
+    candidatos += data.get("status_history", [])
+
+    for item in candidatos:
+        status_nome = (item.get("status") or "").lower().strip()
+        if status_nome == "em edição":
+            since_ms = item.get("total_time", {}).get("since")
+            if since_ms:
+                return datetime.fromtimestamp(int(since_ms) / 1000, tz=timezone.utc).isoformat()
+    return None
 
 # ── Parser de tarefa ───────────────────────────────────────
 
@@ -220,7 +241,16 @@ def full_sync():
                 page = 0
                 while True:
                     tasks_raw, last_page = get_tasks_in_list(lid, page)
-                    parsed = [parse_task(t, sid, sname, lid, lname, fid, fname) for t in tasks_raw]
+                    parsed = []
+                    for t in tasks_raw:
+                        p = parse_task(t, sid, sname, lid, lname, fid, fname)
+                        if fid == TIKTOK_FOLDER_ID:
+                            try:
+                                p["data_em_edicao"] = get_data_em_edicao(t["id"])
+                                time.sleep(0.3)
+                            except Exception as e:
+                                print(f"  ⚠️  Erro time_in_status task {t['id']}: {e}")
+                        parsed.append(p)
                     upsert_tasks(parsed)
                     total += len(parsed)
                     if last_page or not tasks_raw:
