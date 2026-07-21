@@ -169,6 +169,7 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
 <div class="nav-sub visible" id="navSub">
   <button class="nav-sub-btn active" onclick="selectSub('ads',this)">Ads</button>
   <button class="nav-sub-btn" onclick="selectSub('vsl',this)">VSL</button>
+  <button class="nav-sub-btn" onclick="selectSub('tiktok',this)">TikTok</button>
 </div>
 
 <div class="nav-sub" id="navSubCopy">
@@ -209,6 +210,21 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
       </div>
     </div>
   </div>
+</div>
+
+<!-- EDICAO TIKTOK -->
+<div class="page" id="page-tiktok">
+  <div class="kpi-row" style="margin-top:8px;">
+    <div class="kpi"><div class="kpi-label">V&iacute;deos no per&iacute;odo</div>
+      <div class="kpi-value" id="edTiktokKpiTotal">--</div><div class="kpi-sub" id="edTiktokKpiSub">carregando...</div></div>
+    <div class="kpi"><div class="kpi-label">Conclu&iacute;dos</div>
+      <div class="kpi-value" id="edTiktokKpiDone">--</div><div class="kpi-sub">agend. do post, post agendado ou publicado</div></div>
+    <div class="kpi"><div class="kpi-label">Cumprimento Geral</div>
+      <div class="kpi-value" id="edTiktokKpiPct" style="color:#c9a84c;">--</div>
+      <div class="pct-track"><div class="pct-fill" id="edTiktokKpiPctFill" style="width:0%;background:#c9a84c;"></div></div></div>
+  </div>
+  <div class="sec-label">Performance por Editor</div>
+  <div class="editors-grid" id="edTiktokEditorsGrid"><div class="sec-label">Carregando dados do Supabase...</div></div>
 </div>
 
 <!-- COPY -->
@@ -453,7 +469,13 @@ function selectMain(key, btn) {
   const subCopy = document.getElementById('navSubCopy');
   sub.classList.remove('visible');
   subCopy.classList.remove('visible');
-  if (key === 'edicao') { sub.classList.add('visible'); showPage('page-' + currentSub); if (currentSub === 'vsl') loadVSL(); else loadAds(); }
+  if (key === 'edicao') {
+    sub.classList.add('visible');
+    showPage('page-' + currentSub);
+    if (currentSub === 'vsl') loadVSL();
+    else if (currentSub === 'tiktok') loadEdicaoTiktok();
+    else loadAds();
+  }
   else if (key === 'copy') { subCopy.classList.add('visible'); showPage('page-copy-' + currentSubCopy); if (currentSubCopy === 'tiktok') loadCopyTiktok(); else loadCopy(); }
   else { showPage('page-' + key); }
   if (key === 'estrategico') loadEstrategico();
@@ -468,6 +490,7 @@ function selectSub(key, btn) {
   showPage('page-' + key);
   if (key === 'vsl') loadVSL();
   if (key === 'ads') loadAds();
+  if (key === 'tiktok') loadEdicaoTiktok();
 }
 
 function selectSubCopy(key, btn) {
@@ -602,6 +625,76 @@ async function loadAds() {
 }
 
 loadAds();
+
+const ED_TIKTOK_EDITOR_IDS = [82160031, 89397911, 170645656, 89297830, 89362557, 89133258]; // Luan, Malcom, Gustavo T., Victor Ravi, Vitu, Thiago
+const ED_TIKTOK_STATUS_CONCLUIDA = ['agendamento do post', 'post agendado', 'publicado', 'complete'];
+
+async function loadEdicaoTiktok() {
+  const dtStartEl = document.getElementById('dtStart');
+  const dtEndEl = document.getElementById('dtEnd');
+  if (!dtEndEl.value) { dtEndEl.valueAsDate = new Date(); }
+  const dtStart = dtStartEl.value;
+  const dtEnd = dtEndEl.value;
+  if (!dtStart || !dtEnd) return;
+
+  const startISO = new Date(dtStart + "T00:00:00Z").toISOString();
+  const endISO = new Date(dtEnd + "T23:59:59Z").toISOString();
+
+  const grid = document.getElementById('edTiktokEditorsGrid');
+  grid.innerHTML = '<div class="sec-label">Carregando dados do Supabase...</div>';
+  document.getElementById('edTiktokKpiSub').textContent = 'carregando...';
+
+  let tasks = [];
+  try {
+    const url = SUPABASE_URL + "/rest/v1/tasks?apikey=" + SUPABASE_KEY
+      + "&folder_id=eq." + TIKTOK_FOLDER_ID
+      + "&date_created=gte." + startISO + "&date_created=lte." + endISO
+      + "&select=id,name,status,assignees";
+    const r = await fetch(url, { headers: SUPABASE_HEADERS });
+    tasks = await r.json();
+    if (!Array.isArray(tasks)) throw new Error("Resposta inesperada do Supabase");
+  } catch (e) {
+    grid.innerHTML = '<div class="sec-label">Erro ao buscar dados do Supabase. Tenta de novo em alguns segundos.</div>';
+    console.error(e);
+    return;
+  }
+
+  const results = EDITORS
+    .filter(ed => ED_TIKTOK_EDITOR_IDS.includes(ed.id))
+    .map(ed => {
+      const doEditor = tasks.filter(t => {
+        let ass = [];
+        try { ass = JSON.parse(t.assignees || '[]'); } catch (e) {}
+        return ass.some(a => a.id === ed.id);
+      });
+      const total = doEditor.length;
+      const done = doEditor.filter(t => ED_TIKTOK_STATUS_CONCLUIDA.includes((t.status || '').toLowerCase().trim())).length;
+      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+      return Object.assign({}, ed, { total, done, pct });
+    })
+    .filter(r => r.total > 0);
+
+  const totalGeral = results.reduce((s, r) => s + r.total, 0);
+  const doneGeral = results.reduce((s, r) => s + r.done, 0);
+  const pctGeral = totalGeral > 0 ? Math.round((doneGeral / totalGeral) * 100) : 0;
+
+  document.getElementById('edTiktokKpiTotal').textContent = totalGeral;
+  document.getElementById('edTiktokKpiSub').textContent = fmtDataBR(dtStart) + ' – ' + fmtDataBR(dtEnd);
+  document.getElementById('edTiktokKpiDone').textContent = doneGeral;
+  document.getElementById('edTiktokKpiPct').textContent = pctGeral + '%';
+  document.getElementById('edTiktokKpiPct').style.color = corPerformance(pctGeral);
+  document.getElementById('edTiktokKpiPctFill').style.width = pctGeral + '%';
+  document.getElementById('edTiktokKpiPctFill').style.background = corPerformance(pctGeral);
+
+  if (results.length === 0) {
+    grid.innerHTML = '<div class="sec-label">Nenhum v&iacute;deo com cria&ccedil;&atilde;o nesse per&iacute;odo.</div>';
+  } else {
+    grid.innerHTML = results.map(r => {
+      const cor = corPerformance(r.pct);
+      return '<div class="ecard"><div class="ehead"><div class="eavatar" style="background:' + r.color + ';color:#fff;">' + r.initials + '</div><div><div class="ename">' + r.label + '</div><div class="erole">Editor TikTok</div></div></div><div class="estats"><div><div class="eads-label">Concluídos</div><div class="evideos">' + r.done + '</div><div class="evideos-sub">de ' + r.total + ' vídeos</div></div><div><div class="epct-val" style="color:' + cor + ';">' + r.pct + '%</div><div class="epct-sub">cumprimento</div></div></div><div class="ebar-track"><div class="ebar-fill" style="width:' + r.pct + '%;background:' + cor + ';"></div></div></div>';
+    }).join('');
+  }
+}
 
 const VSL_LIST_ID = '901702493697';
 const VSL_OFERTAS_LIST_ID = '901703341802';
