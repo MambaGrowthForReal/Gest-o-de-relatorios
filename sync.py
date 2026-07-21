@@ -76,7 +76,7 @@ def get_subtasks(task_id):
 
 # ── Parser de tarefa ───────────────────────────────────────
 
-def parse_task(task, space_id, space_name, list_id, list_name):
+def parse_task(task, space_id, space_name, list_id, list_name, folder_id=None, folder_name=None):
     assignees = [{"id": a["id"], "username": a.get("username", ""), "email": a.get("email", "")} for a in task.get("assignees", [])]
 
     def ts(ms):
@@ -93,6 +93,8 @@ def parse_task(task, space_id, space_name, list_id, list_name):
         "space_name":   space_name,
         "list_id":      list_id,
         "list_name":    list_name,
+        "folder_id":    folder_id,
+        "folder_name":  folder_name,
         "due_date":     ts(task.get("due_date")),
         "start_date":   ts(task.get("start_date")),
         "tags":         json.dumps([t.get("name", "") for t in task.get("tags", [])]),
@@ -205,16 +207,16 @@ def full_sync():
         spaces = get_spaces(team["id"])
         for space in spaces:
             sid, sname = space["id"], space["name"]
-            lists = get_folderless_lists(sid)
+            listas_com_pasta = [(l["id"], l["name"], None, None) for l in get_folderless_lists(sid)]
             for folder in get_folders(sid):
-                lists += get_lists_in_folder(folder["id"])
+                fid, fname = folder["id"], folder["name"]
+                listas_com_pasta += [(l["id"], l["name"], fid, fname) for l in get_lists_in_folder(fid)]
 
-            for lst in lists:
-                lid, lname = lst["id"], lst["name"]
+            for lid, lname, fid, fname in listas_com_pasta:
                 page = 0
                 while True:
                     tasks_raw, last_page = get_tasks_in_list(lid, page)
-                    parsed = [parse_task(t, sid, sname, lid, lname) for t in tasks_raw]
+                    parsed = [parse_task(t, sid, sname, lid, lname, fid, fname) for t in tasks_raw]
                     upsert_tasks(parsed)
                     total += len(parsed)
                     if last_page or not tasks_raw:
