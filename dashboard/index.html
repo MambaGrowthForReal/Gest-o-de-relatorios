@@ -1162,7 +1162,9 @@ async function loadCriativos() {
       porCopy[copy].push(c);
     });
 
-    const copies = Object.entries(porCopy).sort((a, b) => calcPct(b[1]) - calcPct(a[1]));
+    const copies = Object.entries(porCopy)
+      .filter(([, items]) => items.some(c => c.data_teste && c.status !== 'em_teste'))
+      .sort((a, b) => calcPct(b[1]) - calcPct(a[1]));
 
     if (copies.length === 0) {
       grid.innerHTML = '<div style="color:rgba(255,255,255,.3);font-size:13px;">Nenhum dado no período.</div>';
