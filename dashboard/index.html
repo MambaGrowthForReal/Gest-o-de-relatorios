@@ -283,40 +283,36 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
         <div class="kpi-value" id="criativosEmTeste">--</div>
       </div>
 
-      <div style="width:1px;background:rgba(255,255,255,.08);margin:4px 4px;flex-shrink:0;"></div>
+      <div style="width:1px;align-self:stretch;background:rgba(255,255,255,.1);flex-shrink:0;"></div>
 
-      <div class="kpi-card" style="min-width:170px;flex-shrink:0;position:relative;overflow:hidden;">
-        <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:#9b59b6;"></div>
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
-          <i class="ti ti-photo" style="font-size:15px;color:#9b59b6;" aria-hidden="true"></i>
-          <div class="kpi-label" style="margin-bottom:0;">IMAGENS</div>
+      <div style="flex-shrink:0;">
+        <div class="kpi-label" style="color:#9b59b6;">IMAGENS</div>
+        <div style="display:flex;gap:28px;">
+          <div>
+            <div class="kpi-label" style="margin-bottom:6px;">TESTADAS</div>
+            <div class="kpi-value" id="criativosImgTestadas">--</div>
+          </div>
+          <div>
+            <div class="kpi-label" style="margin-bottom:6px;">VALIDADAS</div>
+            <div class="kpi-value" id="criativosImgValidadas">--</div>
+          </div>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
-          <span style="font-size:12px;color:#fff;">Testadas</span>
-          <span style="font-size:16px;color:#fff;font-weight:500;" id="criativosImgTestadas">--</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
-          <span style="font-size:12px;color:#fff;">Validadas</span>
-          <span style="font-size:16px;color:#fff;font-weight:500;" id="criativosImgValidadas">--</span>
-        </div>
-        <div style="font-size:13px;color:#9b59b6;font-weight:600;" id="criativosImgPct">--</div>
+        <div style="font-size:13px;color:#9b59b6;font-weight:600;margin-top:8px;" id="criativosImgPct">--</div>
       </div>
 
-      <div class="kpi-card" style="min-width:170px;flex-shrink:0;position:relative;overflow:hidden;">
-        <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:#2a6fc4;"></div>
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
-          <i class="ti ti-video" style="font-size:15px;color:#2a6fc4;" aria-hidden="true"></i>
-          <div class="kpi-label" style="margin-bottom:0;">VIDEO</div>
+      <div style="flex-shrink:0;">
+        <div class="kpi-label" style="color:#2a6fc4;">VIDEO</div>
+        <div style="display:flex;gap:28px;">
+          <div>
+            <div class="kpi-label" style="margin-bottom:6px;">TESTADOS</div>
+            <div class="kpi-value" id="criativosVidTestados">--</div>
+          </div>
+          <div>
+            <div class="kpi-label" style="margin-bottom:6px;">VALIDADOS</div>
+            <div class="kpi-value" id="criativosVidValidados">--</div>
+          </div>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
-          <span style="font-size:12px;color:#fff;">Testados</span>
-          <span style="font-size:16px;color:#fff;font-weight:500;" id="criativosVidTestados">--</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
-          <span style="font-size:12px;color:#fff;">Validados</span>
-          <span style="font-size:16px;color:#fff;font-weight:500;" id="criativosVidValidados">--</span>
-        </div>
-        <div style="font-size:13px;color:#2a6fc4;font-weight:600;" id="criativosVidPct">--</div>
+        <div style="font-size:13px;color:#2a6fc4;font-weight:600;margin-top:8px;" id="criativosVidPct">--</div>
       </div>
     </div>
     <div class="sec-label" style="margin-bottom:12px;">Valida&ccedil;&atilde;o por Copy</div>
