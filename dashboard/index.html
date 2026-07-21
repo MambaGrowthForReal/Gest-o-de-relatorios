@@ -648,7 +648,7 @@ async function loadEdicaoTiktok() {
   try {
     const url = SUPABASE_URL + "/rest/v1/tasks?apikey=" + SUPABASE_KEY
       + "&folder_id=eq." + TIKTOK_FOLDER_ID
-      + "&date_created=gte." + startISO + "&date_created=lte." + endISO
+      + "&data_em_edicao=gte." + startISO + "&data_em_edicao=lte." + endISO
       + "&select=id,name,status,assignees";
     const r = await fetch(url, { headers: SUPABASE_HEADERS });
     tasks = await r.json();
@@ -918,7 +918,7 @@ async function loadCopyTiktok() {
   try {
     const url = SUPABASE_URL + "/rest/v1/tasks?apikey=" + SUPABASE_KEY
       + "&folder_id=eq." + TIKTOK_FOLDER_ID
-      + "&date_created=gte." + startISO + "&date_created=lte." + endISO
+      + "&data_em_edicao=gte." + startISO + "&data_em_edicao=lte." + endISO
       + "&select=id,name,status,assignees,creator";
     const r = await fetch(url, { headers: SUPABASE_HEADERS });
     tasks = await r.json();
