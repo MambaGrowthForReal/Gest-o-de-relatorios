@@ -77,6 +77,33 @@ def get_subtasks(task_id):
 
 TIKTOK_STATUS_A_PARTIR_DE_EDICAO = ['em edição', 'aprovação', 'agendamento do post', 'post agendado', 'publicado', 'complete']
 
+def get_existente_por_lista(list_id):
+    """Busca no Supabase o historico_assignees já salvo para as tasks de uma lista específica."""
+    r = requests.get(
+        f"{SUPABASE_URL}/rest/v1/tasks",
+        headers=SUPABASE_HEADERS,
+        params={"list_id": f"eq.{list_id}", "select": "id,historico_assignees"},
+    )
+    r.raise_for_status()
+    return {row["id"]: row.get("historico_assignees") for row in r.json()}
+
+def merge_historico(historico_json_existente, assignees_json_atual):
+    """Mescla quem já foi responsável (histórico) com os responsáveis atuais, sem duplicar."""
+    try:
+        historico = json.loads(historico_json_existente or "[]")
+    except Exception:
+        historico = []
+    ids_no_historico = {h["id"] for h in historico}
+    try:
+        atuais = json.loads(assignees_json_atual or "[]")
+    except Exception:
+        atuais = []
+    for a in atuais:
+        if a["id"] not in ids_no_historico:
+            historico.append(a)
+            ids_no_historico.add(a["id"])
+    return json.dumps(historico)
+
 def get_tiktok_data_em_edicao_existente():
     """Busca no Supabase o que já está salvo (status + data_em_edicao) para as tasks
     da pasta TikTok, para não perder o timestamp já detectado em syncs anteriores."""
@@ -144,6 +171,12 @@ def sync_novos_criativos():
     total = 0
     recuperados = 0
 
+    try:
+        existentes = get_existente_por_lista(NOVOS_CRIATIVOS_LIST_ID)
+    except Exception as e:
+        print(f"  ⚠️  Erro ao buscar histórico existente (Ads): {e}")
+        existentes = {}
+
     while True:
         tasks_raw, last_page = get_tasks_in_list(NOVOS_CRIATIVOS_LIST_ID, page)
         parsed = []
@@ -162,6 +195,8 @@ def sync_novos_criativos():
                     time.sleep(0.3)
                 except Exception as e:
                     print(f"  ⚠️  Erro task {t['id']}: {e}")
+
+            p["historico_assignees"] = merge_historico(existentes.get(t["id"]), p["assignees"])
 
             parsed.append(p)
 
@@ -184,6 +219,12 @@ def sync_vsl_subtasks():
     total = 0
     vsl_keywords = ["vsl", "vl's", "vls"]
 
+    try:
+        existentes = get_existente_por_lista(OFERTAS_LIST_ID)
+    except Exception as e:
+        print(f"  ⚠️  Erro ao buscar histórico existente (VSL): {e}")
+        existentes = {}
+
     while True:
         tasks_raw, last_page = get_tasks_in_list(OFERTAS_LIST_ID, page)
 
@@ -198,6 +239,7 @@ def sync_vsl_subtasks():
                     detail = get_task_detail(sub["id"])
                     time.sleep(0.3)
                     parsed = parse_task(detail, "", "Prod. Ofertas", OFERTAS_LIST_ID, "Ofertas")
+                    parsed["historico_assignees"] = merge_historico(existentes.get(sub["id"]), parsed["assignees"])
                     upsert_tasks([parsed])
                     total += 1
                     print(f"  📹 VSL: {sub.get('name', '')[:50]}")
@@ -256,18 +298,7 @@ def full_sync():
                             else:
                                 p["data_em_edicao"] = None
 
-                            # Acumula histórico de todos que já passaram como responsável pela task
-                            try:
-                                historico = json.loads(existente.get("historico_assignees") or "[]")
-                            except Exception:
-                                historico = []
-                            ids_no_historico = {h["id"] for h in historico}
-                            atuais = json.loads(p["assignees"] or "[]")
-                            for a in atuais:
-                                if a["id"] not in ids_no_historico:
-                                    historico.append(a)
-                                    ids_no_historico.add(a["id"])
-                            p["historico_assignees"] = json.dumps(historico)
+                            p["historico_assignees"] = merge_historico(existente.get("historico_assignees"), p["assignees"])
                         parsed.append(p)
                     upsert_tasks(parsed)
                     total += len(parsed)
