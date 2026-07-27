@@ -83,10 +83,10 @@ def get_tiktok_data_em_edicao_existente():
     r = requests.get(
         f"{SUPABASE_URL}/rest/v1/tasks",
         headers=SUPABASE_HEADERS,
-        params={"folder_id": f"eq.{TIKTOK_FOLDER_ID}", "select": "id,data_em_edicao"},
+        params={"folder_id": f"eq.{TIKTOK_FOLDER_ID}", "select": "id,data_em_edicao,historico_assignees"},
     )
     r.raise_for_status()
-    return {row["id"]: row.get("data_em_edicao") for row in r.json()}
+    return {row["id"]: row for row in r.json()}
 
 # ── Parser de tarefa ───────────────────────────────────────
 
@@ -246,7 +246,8 @@ def full_sync():
                     for t in tasks_raw:
                         p = parse_task(t, sid, sname, lid, lname, fid, fname)
                         if fid == TIKTOK_FOLDER_ID:
-                            ja_tinha = tiktok_existentes.get(t["id"])
+                            existente = tiktok_existentes.get(t["id"], {})
+                            ja_tinha = existente.get("data_em_edicao")
                             status_atual = (p["status"] or "").lower().strip()
                             if ja_tinha:
                                 p["data_em_edicao"] = ja_tinha
@@ -254,6 +255,19 @@ def full_sync():
                                 p["data_em_edicao"] = p["date_updated"] or p["synced_at"]
                             else:
                                 p["data_em_edicao"] = None
+
+                            # Acumula histórico de todos que já passaram como responsável pela task
+                            try:
+                                historico = json.loads(existente.get("historico_assignees") or "[]")
+                            except Exception:
+                                historico = []
+                            ids_no_historico = {h["id"] for h in historico}
+                            atuais = json.loads(p["assignees"] or "[]")
+                            for a in atuais:
+                                if a["id"] not in ids_no_historico:
+                                    historico.append(a)
+                                    ids_no_historico.add(a["id"])
+                            p["historico_assignees"] = json.dumps(historico)
                         parsed.append(p)
                     upsert_tasks(parsed)
                     total += len(parsed)
