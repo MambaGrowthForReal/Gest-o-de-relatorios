@@ -885,6 +885,8 @@ async function loadVSL() {
     return;
   }
 
+  const overridesVsl = await buscarOverrides('edicao_vsl', dtStart, dtEnd);
+
   grid.innerHTML = pessoas.map(p => {
     const leadsTotal = p.leads.length;
     const leadsCompletos = p.leads.filter(t => t.status === 'disponivel para teste').length;
@@ -911,6 +913,30 @@ async function loadVSL() {
       <div class="vsl-items">${itens.join('')}</div>
     </div>`;
   }).join('');
+
+  // Adiciona cards de override manual, para editores sem dado calculado (ou complementando)
+  const idsComCard = new Set(pessoas.map(p => p.id));
+  const cardsManuais = VSL_EDITORS
+    .filter(ed => overridesVsl[ed.id])
+    .map(ed => {
+      const o = overridesVsl[ed.id];
+      return `<div class="ecard">
+        <div class="ehead">
+          <div class="eavatar" style="background:${ed.color};color:#fff;">${ed.initials}</div>
+          <div><div class="ename">${ed.label} <span style="font-size:9px;color:#c9a84c;border:1px solid #c9a84c;border-radius:4px;padding:1px 5px;margin-left:6px;">manual</span></div><div class="erole">Editor VSL</div></div>
+          <span style="margin-left:auto;cursor:pointer;font-size:14px;" title="Editar manualmente" onclick="salvarOverrideManual('edicao_vsl',${ed.id},'${ed.label}','${dtStart}','${dtEnd}',${o.testados},${o.concluidos})">✏️</span>
+        </div>
+        <div class="vsl-items">
+          <div class="vsl-item">
+            <span class="vsl-tipo">${o.testados} item${o.testados !== 1 ? 's' : ''}</span>
+            <span class="vsl-status" style="background:rgba(201,168,76,.15);color:#c9a84c;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:500;">${o.concluidos}/${o.testados} concluído${o.testados !== 1 ? 's' : ''}</span>
+          </div>
+        </div>
+      </div>`;
+    });
+  if (cardsManuais.length > 0) {
+    grid.innerHTML += cardsManuais.join('');
+  }
 
   // Seção VSL de Ofertas
   const vslOfertasPessoas = await loadVSLOfertas(dtStart, dtEnd);
