@@ -16,6 +16,7 @@ POLL_INTERVAL_HOURS = 6
 NOVOS_CRIATIVOS_LIST_ID = "901700896208"
 OFERTAS_LIST_ID = "901703341802"
 TIKTOK_FOLDER_ID = "90179850327"
+VSL_LEAD_LIST_ID = "901702493697"
 
 CLICKUP_HEADERS  = {"Authorization": CLICKUP_TOKEN}
 SUPABASE_HEADERS = {
@@ -269,6 +270,12 @@ def full_sync():
         print(f"  ⚠️  Erro ao buscar dados existentes do TikTok: {e}")
         tiktok_existentes = {}
 
+    try:
+        vsl_lead_existentes = get_existente_por_lista(VSL_LEAD_LIST_ID)
+    except Exception as e:
+        print(f"  ⚠️  Erro ao buscar histórico existente (VSL Lead/Microlead): {e}")
+        vsl_lead_existentes = {}
+
     for team in teams:
         spaces = get_spaces(team["id"])
         for space in spaces:
@@ -299,6 +306,8 @@ def full_sync():
                                 p["data_em_edicao"] = None
 
                             p["historico_assignees"] = merge_historico(existente.get("historico_assignees"), p["assignees"])
+                        elif lid == VSL_LEAD_LIST_ID:
+                            p["historico_assignees"] = merge_historico(vsl_lead_existentes.get(t["id"]), p["assignees"])
                         parsed.append(p)
                     upsert_tasks(parsed)
                     total += len(parsed)
