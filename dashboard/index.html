@@ -649,7 +649,7 @@ async function loadEdicaoTiktok() {
     const url = SUPABASE_URL + "/rest/v1/tasks?apikey=" + SUPABASE_KEY
       + "&folder_id=eq." + TIKTOK_FOLDER_ID
       + "&data_em_edicao=gte." + startISO + "&data_em_edicao=lte." + endISO
-      + "&select=id,name,status,assignees";
+      + "&select=id,name,status,assignees,historico_assignees";
     const r = await fetch(url, { headers: SUPABASE_HEADERS });
     tasks = await r.json();
     if (!Array.isArray(tasks)) throw new Error("Resposta inesperada do Supabase");
@@ -663,6 +663,9 @@ async function loadEdicaoTiktok() {
     .filter(ed => ED_TIKTOK_EDITOR_IDS.includes(ed.id))
     .map(ed => {
       const doEditor = tasks.filter(t => {
+        let historico = [];
+        try { historico = JSON.parse(t.historico_assignees || '[]'); } catch (e) {}
+        if (historico.some(a => a.id === ed.id)) return true;
         let ass = [];
         try { ass = JSON.parse(t.assignees || '[]'); } catch (e) {}
         return ass.some(a => a.id === ed.id);
