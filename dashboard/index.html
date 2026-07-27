@@ -572,7 +572,7 @@ async function loadAds() {
     const url = SUPABASE_URL + "/rest/v1/tasks?apikey=" + SUPABASE_KEY
       + "&list_id=eq." + NOVOS_CRIATIVOS_LIST_ID
       + "&due_date=gte." + startISO + "&due_date=lte." + endISO
-      + "&select=id,name,status,assignees,due_date";
+      + "&select=id,name,status,assignees,due_date,historico_assignees";
     const r = await fetch(url, { headers: SUPABASE_HEADERS });
     tasks = await r.json();
     if (!Array.isArray(tasks)) throw new Error("Resposta inesperada do Supabase");
@@ -586,6 +586,9 @@ async function loadAds() {
     .filter(ed => ADS_EDITOR_IDS.includes(ed.id))
     .map(ed => {
       const doEditor = tasks.filter(t => {
+        let historico = [];
+        try { historico = JSON.parse(t.historico_assignees || '[]'); } catch (e) {}
+        if (historico.some(a => a.id === ed.id)) return true;
         let ass = [];
         try { ass = JSON.parse(t.assignees || '[]'); } catch (e) {}
         return ass.some(a => a.id === ed.id);
@@ -776,7 +779,7 @@ async function loadVSL() {
     const url = SUPABASE_URL + "/rest/v1/tasks?apikey=" + SUPABASE_KEY
       + "&list_id=eq." + VSL_LIST_ID
       + "&due_date=gte." + startISO + "&due_date=lte." + endISO
-      + "&select=id,name,status,assignees";
+      + "&select=id,name,status,assignees,historico_assignees";
     const r = await fetch(url, { headers: SUPABASE_HEADERS });
     tasks = await r.json();
     if (!Array.isArray(tasks)) throw new Error("Resposta inesperada do Supabase");
@@ -788,9 +791,15 @@ async function loadVSL() {
   // Montar cards apenas para os editores VSL definidos
   const pessoaMap = {};
   tasks.forEach(t => {
+    let historico = [];
+    try { historico = JSON.parse(t.historico_assignees || '[]'); } catch(e) {}
     let ass = [];
     try { ass = JSON.parse(t.assignees || '[]'); } catch(e) {}
-    ass.forEach(a => {
+    const todos = [...historico, ...ass];
+    const idsJaVistos = new Set();
+    todos.forEach(a => {
+      if (idsJaVistos.has(a.id)) return;
+      idsJaVistos.add(a.id);
       const editor = VSL_EDITORS.find(e => e.id === a.id);
       if (!editor) return;
       if (!pessoaMap[a.id]) pessoaMap[a.id] = { ...editor, leads: [], microleads: [] };
