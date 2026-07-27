@@ -237,6 +237,8 @@ def full_sync():
                 listas_com_pasta += [(l["id"], l["name"], fid, fname) for l in get_lists_in_folder(fid)]
 
             for lid, lname, fid, fname in listas_com_pasta:
+                if lid == NOVOS_CRIATIVOS_LIST_ID:
+                    continue  # já sincronizada com recuperação de due_date acima, evita sobrescrever com null
                 page = 0
                 while True:
                     tasks_raw, last_page = get_tasks_in_list(lid, page)
