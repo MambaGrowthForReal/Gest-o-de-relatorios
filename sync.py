@@ -318,6 +318,35 @@ def full_sync():
 
     print(f"✅ Sync completo — {total} tarefas processadas\n")
 
+def adicionar_ao_historico(task_id, assignee):
+    """Atualiza o historico_assignees de UMA task específica, sem esperar o próximo sync."""
+    r = requests.get(
+        f"{SUPABASE_URL}/rest/v1/tasks",
+        headers=SUPABASE_HEADERS,
+        params={"id": f"eq.{task_id}", "select": "historico_assignees"},
+    )
+    r.raise_for_status()
+    rows = r.json()
+    if not rows:
+        print(f"  ℹ️  Webhook: task {task_id} ainda não está no Supabase, ignorando (próximo sync completo resolve)")
+        return
+
+    try:
+        historico = json.loads(rows[0].get("historico_assignees") or "[]")
+    except Exception:
+        historico = []
+
+    if not any(h.get("id") == assignee.get("id") for h in historico):
+        historico.append(assignee)
+        r2 = requests.patch(
+            f"{SUPABASE_URL}/rest/v1/tasks",
+            headers=SUPABASE_HEADERS,
+            params={"id": f"eq.{task_id}"},
+            json={"historico_assignees": json.dumps(historico)},
+        )
+        r2.raise_for_status()
+        print(f"  🔔 Webhook: {assignee.get('username','?')} adicionado ao histórico da task {task_id}")
+
 # ── Servidor HTTP para disparo manual do sync ──────────────
 
 sync_em_andamento = False
@@ -373,6 +402,61 @@ class SyncTriggerHandler(BaseHTTPRequestHandler):
             self._cors()
             self.end_headers()
             self.wfile.write(b"em_andamento" if sync_em_andamento else b"ocioso")
+        elif self.path.startswith("/webhook/registrar"):
+            token = self.headers.get("x-sync-token", "")
+            if token != SYNC_TRIGGER_TOKEN:
+                self.send_response(401)
+                self._cors()
+                self.end_headers()
+                self.wfile.write(b"unauthorized")
+                return
+            try:
+                host = self.headers.get("Host", "")
+                endpoint = f"https://{host}/webhook/clickup"
+                teams = get_teams()
+                team_id = teams[0]["id"]
+                r = requests.post(
+                    f"https://api.clickup.com/api/v2/team/{team_id}/webhook",
+                    headers=CLICKUP_HEADERS,
+                    json={"endpoint": endpoint, "events": ["taskAssigneeUpdated"]},
+                )
+                self.send_response(200)
+                self._cors()
+                self.end_headers()
+                self.wfile.write(f"Webhook registrado: {r.status_code} {r.text}".encode())
+            except Exception as e:
+                self.send_response(500)
+                self._cors()
+                self.end_headers()
+                self.wfile.write(str(e).encode())
+        else:
+            self.send_response(404)
+            self._cors()
+            self.end_headers()
+
+    def do_POST(self):
+        if self.path.startswith("/webhook/clickup"):
+            try:
+                length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(length)
+                data = json.loads(body or b"{}")
+                task_id = data.get("task_id")
+                for item in data.get("history_items", []):
+                    if item.get("field") == "assignee_add" and task_id:
+                        depois = item.get("after") or {}
+                        if depois.get("id"):
+                            adicionar_ao_historico(task_id, {
+                                "id": depois.get("id"),
+                                "username": depois.get("username", ""),
+                                "email": depois.get("email", ""),
+                            })
+            except Exception as e:
+                print(f"  ⚠️  Erro processando webhook: {e}")
+            # Responde rápido pro ClickUp, sempre 200 (mesmo se algo falhar internamente)
+            self.send_response(200)
+            self._cors()
+            self.end_headers()
+            self.wfile.write(b"ok")
         else:
             self.send_response(404)
             self._cors()
