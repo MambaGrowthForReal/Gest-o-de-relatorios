@@ -922,7 +922,7 @@ async function loadCopyTiktok() {
     const url = SUPABASE_URL + "/rest/v1/tasks?apikey=" + SUPABASE_KEY
       + "&folder_id=eq." + TIKTOK_FOLDER_ID
       + "&data_em_edicao=gte." + startISO + "&data_em_edicao=lte." + endISO
-      + "&select=id,name,status,assignees,creator";
+      + "&select=id,name,status,assignees,creator,historico_assignees";
     const r = await fetch(url, { headers: SUPABASE_HEADERS });
     tasks = await r.json();
     if (!Array.isArray(tasks)) throw new Error("Resposta inesperada do Supabase");
@@ -936,7 +936,10 @@ async function loadCopyTiktok() {
     const doEditor = tasks.filter(t => {
       let criador = null;
       try { criador = JSON.parse(t.creator || 'null'); } catch (e) {}
-      return criador && criador.id === ed.id;
+      if (criador && criador.id === ed.id) return true;
+      let historico = [];
+      try { historico = JSON.parse(t.historico_assignees || '[]'); } catch (e) {}
+      return historico.some(a => a.id === ed.id);
     });
 
     const total = doEditor.length;
