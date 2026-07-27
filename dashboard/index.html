@@ -626,11 +626,7 @@ async function loadAds() {
 
 loadAds();
 
-const TIKTOK_ED_EDITORS = [
-  { id: 49044193,  label: "Higor Neres", initials: "HI", color: "#2a6fc4" },
-  { id: 89138661,  label: "Shandler",    initials: "SH", color: "#1D9E75" },
-  { id: 89362557,  label: "Vitu",        initials: "VI", color: "#e74c3c" },
-];
+const ED_TIKTOK_EDITOR_IDS = [82160031, 89397911, 170645656, 89297830, 89362557, 89133258]; // Luan, Malcom, Gustavo T., Victor Ravi, Vitu, Thiago
 const ED_TIKTOK_STATUS_CONCLUIDA = ['agendamento do post', 'post agendado', 'publicado', 'complete'];
 
 async function loadEdicaoTiktok() {
@@ -663,7 +659,8 @@ async function loadEdicaoTiktok() {
     return;
   }
 
-  const results = TIKTOK_ED_EDITORS
+  const results = EDITORS
+    .filter(ed => ED_TIKTOK_EDITOR_IDS.includes(ed.id))
     .map(ed => {
       const doEditor = tasks.filter(t => {
         let ass = [];
