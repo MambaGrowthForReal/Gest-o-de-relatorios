@@ -2,12 +2,15 @@ import os
 import time
 import json
 import threading
+import hmac
+import hashlib
 import requests
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # ── Configurações ──────────────────────────────────────────
 CLICKUP_TOKEN = os.getenv("CLICKUP_TOKEN")
+CLICKUP_WEBHOOK_SECRET = os.getenv("CLICKUP_WEBHOOK_SECRET", "")
 SUPABASE_URL  = os.getenv("SUPABASE_URL")
 SUPABASE_KEY  = os.getenv("SUPABASE_KEY")
 SYNC_TRIGGER_TOKEN = os.getenv("SYNC_TRIGGER_TOKEN", "mamba2026dash")
@@ -420,10 +423,18 @@ class SyncTriggerHandler(BaseHTTPRequestHandler):
                     headers=CLICKUP_HEADERS,
                     json={"endpoint": endpoint, "events": ["taskAssigneeUpdated"]},
                 )
+                resposta_json = r.json()
+                secret = resposta_json.get("webhook", {}).get("secret", "")
+                mensagem = (
+                    f"Status: {r.status_code}\n"
+                    f"Resposta: {r.text}\n\n"
+                    f"⚠️ IMPORTANTE: copia esse secret e cola como variável de ambiente\n"
+                    f"CLICKUP_WEBHOOK_SECRET no Railway:\n{secret}\n"
+                )
                 self.send_response(200)
                 self._cors()
                 self.end_headers()
-                self.wfile.write(f"Webhook registrado: {r.status_code} {r.text}".encode())
+                self.wfile.write(mensagem.encode())
             except Exception as e:
                 self.send_response(500)
                 self._cors()
@@ -436,9 +447,32 @@ class SyncTriggerHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         if self.path.startswith("/webhook/clickup"):
+            length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(length)
+
+            # Valida a assinatura: garante que a requisição veio mesmo da ClickUp
+            assinatura_recebida = self.headers.get("X-Signature", "")
+            if not CLICKUP_WEBHOOK_SECRET:
+                print("  ⚠️  CLICKUP_WEBHOOK_SECRET não configurado — rejeitando webhook por segurança")
+                self.send_response(401)
+                self._cors()
+                self.end_headers()
+                self.wfile.write(b"webhook secret nao configurado")
+                return
+
+            assinatura_esperada = hmac.new(
+                CLICKUP_WEBHOOK_SECRET.encode(), body, hashlib.sha256
+            ).hexdigest()
+
+            if not hmac.compare_digest(assinatura_recebida, assinatura_esperada):
+                print("  🚫 Webhook com assinatura inválida — requisição rejeitada")
+                self.send_response(401)
+                self._cors()
+                self.end_headers()
+                self.wfile.write(b"assinatura invalida")
+                return
+
             try:
-                length = int(self.headers.get("Content-Length", 0))
-                body = self.rfile.read(length)
                 data = json.loads(body or b"{}")
                 task_id = data.get("task_id")
                 for item in data.get("history_items", []):
