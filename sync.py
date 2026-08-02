@@ -37,24 +37,34 @@ def get_teams():
     return r.json().get("teams", [])
 
 def get_spaces(team_id):
-    r = requests.get(f"https://api.clickup.com/api/v2/team/{team_id}/space?archived=false", headers=CLICKUP_HEADERS)
-    r.raise_for_status()
+    r = clickup_get(f"https://api.clickup.com/api/v2/team/{team_id}/space?archived=false")
     return r.json().get("spaces", [])
 
 def get_folders(space_id):
-    r = requests.get(f"https://api.clickup.com/api/v2/space/{space_id}/folder?archived=false", headers=CLICKUP_HEADERS)
-    r.raise_for_status()
+    r = clickup_get(f"https://api.clickup.com/api/v2/space/{space_id}/folder?archived=false")
     return r.json().get("folders", [])
 
 def get_folderless_lists(space_id):
-    r = requests.get(f"https://api.clickup.com/api/v2/space/{space_id}/list?archived=false", headers=CLICKUP_HEADERS)
-    r.raise_for_status()
+    r = clickup_get(f"https://api.clickup.com/api/v2/space/{space_id}/list?archived=false")
     return r.json().get("lists", [])
 
 def get_lists_in_folder(folder_id):
-    r = requests.get(f"https://api.clickup.com/api/v2/folder/{folder_id}/list?archived=false", headers=CLICKUP_HEADERS)
+    r = clickup_get(f"https://api.clickup.com/api/v2/folder/{folder_id}/list?archived=false")
     r.raise_for_status()
     return r.json().get("lists", [])
+
+def clickup_get(url, params=None, max_tentativas=5):
+    """Chamada GET à API da ClickUp com espera e nova tentativa automática em caso de 429 (rate limit)."""
+    for tentativa in range(max_tentativas):
+        r = requests.get(url, headers=CLICKUP_HEADERS, params=params)
+        if r.status_code == 429:
+            espera = int(r.headers.get("Retry-After", 10))
+            print(f"  ⏳ Rate limit (429) — aguardando {espera}s antes de tentar de novo (tentativa {tentativa+1}/{max_tentativas})")
+            time.sleep(espera)
+            continue
+        r.raise_for_status()
+        return r
+    raise Exception(f"Excedeu {max_tentativas} tentativas por rate limit persistente: {url}")
 
 def get_tasks_in_list(list_id, page=0):
     params = {
@@ -64,19 +74,16 @@ def get_tasks_in_list(list_id, page=0):
         "order_by": "updated",
         "reverse": "true",
     }
-    r = requests.get(f"https://api.clickup.com/api/v2/list/{list_id}/task", headers=CLICKUP_HEADERS, params=params)
-    r.raise_for_status()
+    r = clickup_get(f"https://api.clickup.com/api/v2/list/{list_id}/task", params=params)
     data = r.json()
     return data.get("tasks", []), data.get("last_page", True)
 
 def get_task_detail(task_id):
-    r = requests.get(f"https://api.clickup.com/api/v2/task/{task_id}", headers=CLICKUP_HEADERS)
-    r.raise_for_status()
+    r = clickup_get(f"https://api.clickup.com/api/v2/task/{task_id}")
     return r.json()
 
 def get_subtasks(task_id):
-    r = requests.get(f"https://api.clickup.com/api/v2/task/{task_id}?include_subtasks=true", headers=CLICKUP_HEADERS)
-    r.raise_for_status()
+    r = clickup_get(f"https://api.clickup.com/api/v2/task/{task_id}?include_subtasks=true")
     return r.json().get("subtasks", [])
 
 TIKTOK_STATUS_A_PARTIR_DE_EDICAO = ['em edição', 'aprovação', 'agendamento do post', 'post agendado', 'publicado', 'complete']
