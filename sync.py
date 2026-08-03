@@ -7,6 +7,7 @@ import hashlib
 import requests
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from urllib.parse import urlparse, parse_qs
 
 # ── Configurações ──────────────────────────────────────────
 CLICKUP_TOKEN = os.getenv("CLICKUP_TOKEN")
@@ -413,7 +414,8 @@ class SyncTriggerHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b"em_andamento" if sync_em_andamento else b"ocioso")
         elif self.path.startswith("/webhook/registrar"):
-            token = self.headers.get("x-sync-token", "")
+            query = parse_qs(urlparse(self.path).query)
+            token = self.headers.get("x-sync-token", "") or query.get("token", [""])[0]
             if token != SYNC_TRIGGER_TOKEN:
                 self.send_response(401)
                 self._cors()
