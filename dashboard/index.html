@@ -417,6 +417,25 @@ body{background:#000;min-height:100vh;font-family:Inter,sans-serif;color:#fff;}
   </div>
 </div>
 
+<!-- Modal de override manual -->
+<div class="modal-overlay" id="overrideModal">
+  <div class="modal-box" style="max-width:360px;">
+    <div class="modal-title" id="overrideModalTitle">Editar manualmente</div>
+    <div>
+      <label style="font-size:11px;color:rgba(255,255,255,.6);font-weight:600;letter-spacing:.06em;">TESTADOS / PLANEJADOS</label>
+      <input id="overrideModalTestados" type="number" style="width:100%;margin-top:6px;background:#000;border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;font-size:14px;padding:10px 12px;outline:none;font-family:Inter,sans-serif;">
+    </div>
+    <div>
+      <label style="font-size:11px;color:rgba(255,255,255,.6);font-weight:600;letter-spacing:.06em;">CONCLUÍDOS / ENTREGUES</label>
+      <input id="overrideModalConcluidos" type="number" style="width:100%;margin-top:6px;background:#000;border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;font-size:14px;padding:10px 12px;outline:none;font-family:Inter,sans-serif;">
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn cancel" onclick="fecharModalOverride()">Cancelar</button>
+      <button class="modal-btn confirm" onclick="confirmarModalOverride()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal de apagar -->
 <div class="modal-overlay" id="deleteModal">
   <div class="modal-box">
@@ -531,11 +550,26 @@ async function buscarOverrides(tela, dtStart, dtEnd) {
   }
 }
 
-async function salvarOverrideManual(tela, editorId, editorLabel, dtStart, dtEnd, testadosAtual, concluidosAtual) {
-  const novoTestados = prompt("Testados (" + editorLabel + "):", testadosAtual);
-  if (novoTestados === null) return;
-  const novoConcluidos = prompt("Concluídos (" + editorLabel + "):", concluidosAtual);
-  if (novoConcluidos === null) return;
+let overrideModalContexto = null;
+
+function abrirModalOverride(tela, editorId, editorLabel, dtStart, dtEnd, testadosAtual, concluidosAtual) {
+  overrideModalContexto = { tela, editorId, editorLabel, dtStart, dtEnd };
+  document.getElementById('overrideModalTitle').textContent = 'Editar manualmente — ' + editorLabel;
+  document.getElementById('overrideModalTestados').value = testadosAtual;
+  document.getElementById('overrideModalConcluidos').value = concluidosAtual;
+  document.getElementById('overrideModal').classList.add('open');
+}
+
+function fecharModalOverride() {
+  document.getElementById('overrideModal').classList.remove('open');
+  overrideModalContexto = null;
+}
+
+async function confirmarModalOverride() {
+  if (!overrideModalContexto) return;
+  const { tela, editorId, editorLabel, dtStart, dtEnd } = overrideModalContexto;
+  const novoTestados = parseInt(document.getElementById('overrideModalTestados').value) || 0;
+  const novoConcluidos = parseInt(document.getElementById('overrideModalConcluidos').value) || 0;
 
   try {
     await fetch(SUPABASE_URL + "/rest/v1/manual_overrides", {
@@ -548,8 +582,8 @@ async function salvarOverrideManual(tela, editorId, editorLabel, dtStart, dtEnd,
         tela: tela,
         editor_id: editorId,
         editor_label: editorLabel,
-        testados: parseInt(novoTestados) || 0,
-        concluidos: parseInt(novoConcluidos) || 0,
+        testados: novoTestados,
+        concluidos: novoConcluidos,
         periodo_de: dtStart,
         periodo_ate: dtEnd
       }])
@@ -560,8 +594,13 @@ async function salvarOverrideManual(tela, editorId, editorLabel, dtStart, dtEnd,
     return;
   }
 
+  fecharModalOverride();
+
   if (tela === 'edicao_ads') loadAds();
   if (tela === 'edicao_tiktok') loadEdicaoTiktok();
+  if (tela === 'edicao_vsl') loadVSL();
+  if (tela === 'copy_ads') loadCopy();
+  if (tela === 'copy_tiktok') loadCopyTiktok();
 }
 
 const EDITORS = [
@@ -674,7 +713,7 @@ async function loadAds() {
     grid.innerHTML = results.map(r => {
       const cor = corPerformance(r.pct);
       const tagManual = r.temOverride ? '<span style="font-size:9px;color:#c9a84c;border:1px solid #c9a84c;border-radius:4px;padding:1px 5px;margin-left:6px;">manual</span>' : '';
-      return '<div class="ecard"><div class="ehead"><div class="eavatar" style="background:' + r.color + ';color:#fff;">' + r.initials + '</div><div><div class="ename">' + r.label + tagManual + '</div><div class="erole">Editor</div></div><span style="margin-left:auto;cursor:pointer;font-size:14px;" title="Editar manualmente" onclick="salvarOverrideManual(\'edicao_ads\',' + r.id + ',\'' + r.label + '\',\'' + dtStart + '\',\'' + dtEnd + '\',' + r.total + ',' + r.done + ')">✏️</span></div><div class="estats"><div><div class="eads-label">Criativos concluídos</div><div class="evideos">' + r.done + '</div><div class="evideos-sub">de ' + r.total + ' criativos</div></div><div><div class="epct-val" style="color:' + cor + ';">' + r.pct + '%</div><div class="epct-sub">cumprimento</div></div></div><div class="ebar-track"><div class="ebar-fill" style="width:' + r.pct + '%;background:' + cor + ';"></div></div></div>';
+      return '<div class="ecard"><div class="ehead"><div class="eavatar" style="background:' + r.color + ';color:#fff;">' + r.initials + '</div><div><div class="ename">' + r.label + tagManual + '</div><div class="erole">Editor</div></div><span style="margin-left:auto;cursor:pointer;font-size:14px;" title="Editar manualmente" onclick="abrirModalOverride(\'edicao_ads\',' + r.id + ',\'' + r.label + '\',\'' + dtStart + '\',\'' + dtEnd + '\',' + r.total + ',' + r.done + ')">✏️</span></div><div class="estats"><div><div class="eads-label">Criativos concluídos</div><div class="evideos">' + r.done + '</div><div class="evideos-sub">de ' + r.total + ' criativos</div></div><div><div class="epct-val" style="color:' + cor + ';">' + r.pct + '%</div><div class="epct-sub">cumprimento</div></div></div><div class="ebar-track"><div class="ebar-fill" style="width:' + r.pct + '%;background:' + cor + ';"></div></div></div>';
     }).join('');
   }
 
@@ -760,7 +799,7 @@ async function loadEdicaoTiktok() {
     grid.innerHTML = results.map(r => {
       const cor = corPerformance(r.pct);
       const tagManual = r.temOverride ? '<span style="font-size:9px;color:#c9a84c;border:1px solid #c9a84c;border-radius:4px;padding:1px 5px;margin-left:6px;">manual</span>' : '';
-      return '<div class="ecard"><div class="ehead"><div class="eavatar" style="background:' + r.color + ';color:#fff;">' + r.initials + '</div><div><div class="ename">' + r.label + tagManual + '</div><div class="erole">Editor TikTok</div></div><span style="margin-left:auto;cursor:pointer;font-size:14px;" title="Editar manualmente" onclick="salvarOverrideManual(\'edicao_tiktok\',' + r.id + ',\'' + r.label + '\',\'' + dtStart + '\',\'' + dtEnd + '\',' + r.total + ',' + r.done + ')">✏️</span></div><div class="estats"><div><div class="eads-label">Concluídos</div><div class="evideos">' + r.done + '</div><div class="evideos-sub">de ' + r.total + ' vídeos</div></div><div><div class="epct-val" style="color:' + cor + ';">' + r.pct + '%</div><div class="epct-sub">cumprimento</div></div></div><div class="ebar-track"><div class="ebar-fill" style="width:' + r.pct + '%;background:' + cor + ';"></div></div></div>';
+      return '<div class="ecard"><div class="ehead"><div class="eavatar" style="background:' + r.color + ';color:#fff;">' + r.initials + '</div><div><div class="ename">' + r.label + tagManual + '</div><div class="erole">Editor TikTok</div></div><span style="margin-left:auto;cursor:pointer;font-size:14px;" title="Editar manualmente" onclick="abrirModalOverride(\'edicao_tiktok\',' + r.id + ',\'' + r.label + '\',\'' + dtStart + '\',\'' + dtEnd + '\',' + r.total + ',' + r.done + ')">✏️</span></div><div class="estats"><div><div class="eads-label">Concluídos</div><div class="evideos">' + r.done + '</div><div class="evideos-sub">de ' + r.total + ' vídeos</div></div><div><div class="epct-val" style="color:' + cor + ';">' + r.pct + '%</div><div class="epct-sub">cumprimento</div></div></div><div class="ebar-track"><div class="ebar-fill" style="width:' + r.pct + '%;background:' + cor + ';"></div></div></div>';
     }).join('');
   }
 }
@@ -924,7 +963,7 @@ async function loadVSL() {
         <div class="ehead">
           <div class="eavatar" style="background:${ed.color};color:#fff;">${ed.initials}</div>
           <div><div class="ename">${ed.label} <span style="font-size:9px;color:#c9a84c;border:1px solid #c9a84c;border-radius:4px;padding:1px 5px;margin-left:6px;">manual</span></div><div class="erole">Editor VSL</div></div>
-          <span style="margin-left:auto;cursor:pointer;font-size:14px;" title="Editar manualmente" onclick="salvarOverrideManual('edicao_vsl',${ed.id},'${ed.label}','${dtStart}','${dtEnd}',${o.testados},${o.concluidos})">✏️</span>
+          <span style="margin-left:auto;cursor:pointer;font-size:14px;" title="Editar manualmente" onclick="abrirModalOverride('edicao_vsl',${ed.id},'${ed.label}','${dtStart}','${dtEnd}',${o.testados},${o.concluidos})">✏️</span>
         </div>
         <div class="vsl-items">
           <div class="vsl-item">
@@ -1030,6 +1069,8 @@ async function loadCopyTiktok() {
     return;
   }
 
+  const overridesCopyTiktok = await buscarOverrides('copy_tiktok', dtStart, dtEnd);
+
   const results = TIKTOK_EDITORS.map(ed => {
     const doEditor = tasks.filter(t => {
       let criador = null;
@@ -1040,12 +1081,15 @@ async function loadCopyTiktok() {
       return historico.some(a => a.id === ed.id);
     });
 
-    const total = doEditor.length;
-    const done = doEditor.filter(t => TIKTOK_STATUS_ENTREGUE.includes((t.status || '').toLowerCase().trim())).length;
+    let total = doEditor.length;
+    let done = doEditor.filter(t => TIKTOK_STATUS_ENTREGUE.includes((t.status || '').toLowerCase().trim())).length;
+    const override = overridesCopyTiktok[ed.id];
+    const temOverride = !!override;
+    if (temOverride) { total = override.testados; done = override.concluidos; }
     const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-    return Object.assign({}, ed, { total, done, pct });
+    return Object.assign({}, ed, { total, done, pct, temOverride });
   })
-  .filter(r => r.total > 0);
+  .filter(r => r.total > 0 || r.temOverride);
 
   const totalGeral = results.reduce((s, r) => s + r.total, 0);
   const doneGeral = results.reduce((s, r) => s + r.done, 0);
@@ -1065,7 +1109,8 @@ async function loadCopyTiktok() {
     grid.innerHTML = results.map(r => {
       const cor = corPerformance(r.pct);
       const tc = r.color === "#c9a84c" ? "#000" : "#fff";
-      return '<div class="ecard"><div class="ehead"><div class="eavatar" style="background:' + r.color + ';color:' + tc + ';">' + r.initials + '</div><div><div class="ename">' + r.label + '</div><div class="erole">TikTok</div></div></div><div class="estats"><div><div class="eads-label">Entregues</div><div class="evideos">' + r.done + '</div><div class="evideos-sub">de ' + r.total + ' planejados</div></div><div><div class="epct-val" style="color:' + cor + ';">' + r.pct + '%</div><div class="epct-sub">cumprimento</div></div></div><div class="ebar-track"><div class="ebar-fill" style="width:' + r.pct + '%;background:' + cor + ';"></div></div></div>';
+      const tagManual = r.temOverride ? '<span style="font-size:9px;color:#c9a84c;border:1px solid #c9a84c;border-radius:4px;padding:1px 5px;margin-left:6px;">manual</span>' : '';
+      return '<div class="ecard"><div class="ehead"><div class="eavatar" style="background:' + r.color + ';color:' + tc + ';">' + r.initials + '</div><div><div class="ename">' + r.label + tagManual + '</div><div class="erole">TikTok</div></div><span style="margin-left:auto;cursor:pointer;font-size:14px;" title="Editar manualmente" onclick="abrirModalOverride(\'copy_tiktok\',' + r.id + ',\'' + r.label + '\',\'' + dtStart + '\',\'' + dtEnd + '\',' + r.total + ',' + r.done + ')">✏️</span></div><div class="estats"><div><div class="eads-label">Entregues</div><div class="evideos">' + r.done + '</div><div class="evideos-sub">de ' + r.total + ' planejados</div></div><div><div class="epct-val" style="color:' + cor + ';">' + r.pct + '%</div><div class="epct-sub">cumprimento</div></div></div><div class="ebar-track"><div class="ebar-fill" style="width:' + r.pct + '%;background:' + cor + ';"></div></div></div>';
     }).join('');
   }
 }
@@ -1100,6 +1145,8 @@ async function loadCopy() {
     return;
   }
 
+  const overridesCopyAds = await buscarOverrides('copy_ads', dtStart, dtEnd);
+
   const results = COPY_EDITORS.map(ed => {
     let doEditor = tasks.filter(t => {
       let ass = [];
@@ -1116,12 +1163,15 @@ async function loadCopy() {
       });
     }
     
-    const total = doEditor.length * 5;
-    const done = doEditor.filter(t => t.status === 'complete').length * 5;
+    let total = doEditor.length * 5;
+    let done = doEditor.filter(t => t.status === 'complete').length * 5;
+    const override = overridesCopyAds[ed.id];
+    const temOverride = !!override;
+    if (temOverride) { total = override.testados; done = override.concluidos; }
     const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-    return Object.assign({}, ed, { total, done, pct });
+    return Object.assign({}, ed, { total, done, pct, temOverride });
   })
-  .filter(r => r.total > 0);
+  .filter(r => r.total > 0 || r.temOverride);
 
   const totalGeral = results.reduce((s, r) => s + r.total, 0);
   const doneGeral = results.reduce((s, r) => s + r.done, 0);
@@ -1141,7 +1191,8 @@ async function loadCopy() {
     grid.innerHTML = results.map(r => {
       const cor = corPerformance(r.pct);
       const tc = r.color === "#c9a84c" ? "#000" : "#fff";
-      return '<div class="ecard"><div class="ehead"><div class="eavatar" style="background:' + r.color + ';color:' + tc + ';">' + r.initials + '</div><div><div class="ename">' + r.label + '</div><div class="erole">Copy</div></div></div><div class="estats"><div><div class="eads-label">Entregues</div><div class="evideos">' + r.done + '</div><div class="evideos-sub">de ' + r.total + ' planejados</div></div><div><div class="epct-val" style="color:' + cor + ';">' + r.pct + '%</div><div class="epct-sub">cumprimento</div></div></div><div class="ebar-track"><div class="ebar-fill" style="width:' + r.pct + '%;background:' + cor + ';"></div></div></div>';
+      const tagManual = r.temOverride ? '<span style="font-size:9px;color:#c9a84c;border:1px solid #c9a84c;border-radius:4px;padding:1px 5px;margin-left:6px;">manual</span>' : '';
+      return '<div class="ecard"><div class="ehead"><div class="eavatar" style="background:' + r.color + ';color:' + tc + ';">' + r.initials + '</div><div><div class="ename">' + r.label + tagManual + '</div><div class="erole">Copy</div></div><span style="margin-left:auto;cursor:pointer;font-size:14px;" title="Editar manualmente" onclick="abrirModalOverride(\'copy_ads\',' + r.id + ',\'' + r.label + '\',\'' + dtStart + '\',\'' + dtEnd + '\',' + r.total + ',' + r.done + ')">✏️</span></div><div class="estats"><div><div class="eads-label">Entregues</div><div class="evideos">' + r.done + '</div><div class="evideos-sub">de ' + r.total + ' planejados</div></div><div><div class="epct-val" style="color:' + cor + ';">' + r.pct + '%</div><div class="epct-sub">cumprimento</div></div></div><div class="ebar-track"><div class="ebar-fill" style="width:' + r.pct + '%;background:' + cor + ';"></div></div></div>';
     }).join('');
   }
 }
