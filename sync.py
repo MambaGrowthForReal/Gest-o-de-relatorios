@@ -413,6 +413,33 @@ class SyncTriggerHandler(BaseHTTPRequestHandler):
             self._cors()
             self.end_headers()
             self.wfile.write(b"em_andamento" if sync_em_andamento else b"ocioso")
+        elif self.path.startswith("/webhook/status"):
+            query = parse_qs(urlparse(self.path).query)
+            token = self.headers.get("x-sync-token", "") or query.get("token", [""])[0]
+            if token != SYNC_TRIGGER_TOKEN:
+                self.send_response(401)
+                self._cors()
+                self.end_headers()
+                self.wfile.write(b"unauthorized")
+                return
+            try:
+                teams = get_teams()
+                resultado = []
+                for team in teams:
+                    r = requests.get(
+                        f"https://api.clickup.com/api/v2/team/{team['id']}/webhook",
+                        headers=CLICKUP_HEADERS,
+                    )
+                    resultado.append({"team_id": team["id"], "team_name": team.get("name"), "webhooks": r.json()})
+                self.send_response(200)
+                self._cors()
+                self.end_headers()
+                self.wfile.write(json.dumps(resultado, indent=2).encode())
+            except Exception as e:
+                self.send_response(500)
+                self._cors()
+                self.end_headers()
+                self.wfile.write(str(e).encode())
         elif self.path.startswith("/webhook/registrar"):
             query = parse_qs(urlparse(self.path).query)
             token = self.headers.get("x-sync-token", "") or query.get("token", [""])[0]
