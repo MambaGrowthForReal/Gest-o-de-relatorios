@@ -704,7 +704,7 @@ async function loadAds() {
   document.getElementById('kpiDone').textContent = doneGeral;
   document.getElementById('kpiPct').textContent = pctGeral + '%';
   document.getElementById('kpiPct').style.color = corPerformance(pctGeral);
-  document.getElementById('kpiPctFill').style.width = pctGeral + '%';
+  document.getElementById('kpiPctFill').style.width = Math.min(pctGeral, 100) + '%';
   document.getElementById('kpiPctFill').style.background = corPerformance(pctGeral);
 
   if (results.length === 0) {
@@ -713,7 +713,7 @@ async function loadAds() {
     grid.innerHTML = results.map(r => {
       const cor = corPerformance(r.pct);
       const tagManual = r.temOverride ? '<span style="font-size:9px;color:#c9a84c;border:1px solid #c9a84c;border-radius:4px;padding:1px 5px;margin-left:6px;">manual</span>' : '';
-      return '<div class="ecard"><div class="ehead"><div class="eavatar" style="background:' + r.color + ';color:#fff;">' + r.initials + '</div><div><div class="ename">' + r.label + tagManual + '</div><div class="erole">Editor</div></div><span style="margin-left:auto;cursor:pointer;font-size:14px;" title="Editar manualmente" onclick="abrirModalOverride(\'edicao_ads\',' + r.id + ',\'' + r.label + '\',\'' + dtStart + '\',\'' + dtEnd + '\',' + r.total + ',' + r.done + ')">✏️</span></div><div class="estats"><div><div class="eads-label">Criativos concluídos</div><div class="evideos">' + r.done + '</div><div class="evideos-sub">de ' + r.total + ' criativos</div></div><div><div class="epct-val" style="color:' + cor + ';">' + r.pct + '%</div><div class="epct-sub">cumprimento</div></div></div><div class="ebar-track"><div class="ebar-fill" style="width:' + r.pct + '%;background:' + cor + ';"></div></div></div>';
+      return '<div class="ecard"><div class="ehead"><div class="eavatar" style="background:' + r.color + ';color:#fff;">' + r.initials + '</div><div><div class="ename">' + r.label + tagManual + '</div><div class="erole">Editor</div></div><span style="margin-left:auto;cursor:pointer;font-size:14px;" title="Editar manualmente" onclick="abrirModalOverride(\'edicao_ads\',' + r.id + ',\'' + r.label + '\',\'' + dtStart + '\',\'' + dtEnd + '\',' + r.total + ',' + r.done + ')">✏️</span></div><div class="estats"><div><div class="eads-label">Criativos concluídos</div><div class="evideos">' + r.done + '</div><div class="evideos-sub">de ' + r.total + ' criativos</div></div><div><div class="epct-val" style="color:' + cor + ';">' + r.pct + '%</div><div class="epct-sub">cumprimento</div></div></div><div class="ebar-track"><div class="ebar-fill" style="width:' + Math.min(r.pct, 100) + '%;background:' + cor + ';"></div></div></div>';
     }).join('');
   }
 
@@ -790,7 +790,7 @@ async function loadEdicaoTiktok() {
   document.getElementById('edTiktokKpiDone').textContent = doneGeral;
   document.getElementById('edTiktokKpiPct').textContent = pctGeral + '%';
   document.getElementById('edTiktokKpiPct').style.color = corPerformance(pctGeral);
-  document.getElementById('edTiktokKpiPctFill').style.width = pctGeral + '%';
+  document.getElementById('edTiktokKpiPctFill').style.width = Math.min(pctGeral, 100) + '%';
   document.getElementById('edTiktokKpiPctFill').style.background = corPerformance(pctGeral);
 
   if (results.length === 0) {
@@ -799,7 +799,7 @@ async function loadEdicaoTiktok() {
     grid.innerHTML = results.map(r => {
       const cor = corPerformance(r.pct);
       const tagManual = r.temOverride ? '<span style="font-size:9px;color:#c9a84c;border:1px solid #c9a84c;border-radius:4px;padding:1px 5px;margin-left:6px;">manual</span>' : '';
-      return '<div class="ecard"><div class="ehead"><div class="eavatar" style="background:' + r.color + ';color:#fff;">' + r.initials + '</div><div><div class="ename">' + r.label + tagManual + '</div><div class="erole">Editor TikTok</div></div><span style="margin-left:auto;cursor:pointer;font-size:14px;" title="Editar manualmente" onclick="abrirModalOverride(\'edicao_tiktok\',' + r.id + ',\'' + r.label + '\',\'' + dtStart + '\',\'' + dtEnd + '\',' + r.total + ',' + r.done + ')">✏️</span></div><div class="estats"><div><div class="eads-label">Concluídos</div><div class="evideos">' + r.done + '</div><div class="evideos-sub">de ' + r.total + ' vídeos</div></div><div><div class="epct-val" style="color:' + cor + ';">' + r.pct + '%</div><div class="epct-sub">cumprimento</div></div></div><div class="ebar-track"><div class="ebar-fill" style="width:' + r.pct + '%;background:' + cor + ';"></div></div></div>';
+      return '<div class="ecard"><div class="ehead"><div class="eavatar" style="background:' + r.color + ';color:#fff;">' + r.initials + '</div><div><div class="ename">' + r.label + tagManual + '</div><div class="erole">Editor TikTok</div></div><span style="margin-left:auto;cursor:pointer;font-size:14px;" title="Editar manualmente" onclick="abrirModalOverride(\'edicao_tiktok\',' + r.id + ',\'' + r.label + '\',\'' + dtStart + '\',\'' + dtEnd + '\',' + r.total + ',' + r.done + ')">✏️</span></div><div class="estats"><div><div class="eads-label">Concluídos</div><div class="evideos">' + r.done + '</div><div class="evideos-sub">de ' + r.total + ' vídeos</div></div><div><div class="epct-val" style="color:' + cor + ';">' + r.pct + '%</div><div class="epct-sub">cumprimento</div></div></div><div class="ebar-track"><div class="ebar-fill" style="width:' + Math.min(r.pct, 100) + '%;background:' + cor + ';"></div></div></div>';
     }).join('');
   }
 }
@@ -1100,7 +1100,7 @@ async function loadCopyTiktok() {
   document.getElementById('tiktokKpiDone').textContent = doneGeral;
   document.getElementById('tiktokKpiPct').textContent = pctGeral + '%';
   document.getElementById('tiktokKpiPct').style.color = corPerformance(pctGeral);
-  document.getElementById('tiktokKpiPctFill').style.width = pctGeral + '%';
+  document.getElementById('tiktokKpiPctFill').style.width = Math.min(pctGeral, 100) + '%';
   document.getElementById('tiktokKpiPctFill').style.background = corPerformance(pctGeral);
 
   if (results.length === 0) {
@@ -1110,7 +1110,7 @@ async function loadCopyTiktok() {
       const cor = corPerformance(r.pct);
       const tc = r.color === "#c9a84c" ? "#000" : "#fff";
       const tagManual = r.temOverride ? '<span style="font-size:9px;color:#c9a84c;border:1px solid #c9a84c;border-radius:4px;padding:1px 5px;margin-left:6px;">manual</span>' : '';
-      return '<div class="ecard"><div class="ehead"><div class="eavatar" style="background:' + r.color + ';color:' + tc + ';">' + r.initials + '</div><div><div class="ename">' + r.label + tagManual + '</div><div class="erole">TikTok</div></div><span style="margin-left:auto;cursor:pointer;font-size:14px;" title="Editar manualmente" onclick="abrirModalOverride(\'copy_tiktok\',' + r.id + ',\'' + r.label + '\',\'' + dtStart + '\',\'' + dtEnd + '\',' + r.total + ',' + r.done + ')">✏️</span></div><div class="estats"><div><div class="eads-label">Entregues</div><div class="evideos">' + r.done + '</div><div class="evideos-sub">de ' + r.total + ' planejados</div></div><div><div class="epct-val" style="color:' + cor + ';">' + r.pct + '%</div><div class="epct-sub">cumprimento</div></div></div><div class="ebar-track"><div class="ebar-fill" style="width:' + r.pct + '%;background:' + cor + ';"></div></div></div>';
+      return '<div class="ecard"><div class="ehead"><div class="eavatar" style="background:' + r.color + ';color:' + tc + ';">' + r.initials + '</div><div><div class="ename">' + r.label + tagManual + '</div><div class="erole">TikTok</div></div><span style="margin-left:auto;cursor:pointer;font-size:14px;" title="Editar manualmente" onclick="abrirModalOverride(\'copy_tiktok\',' + r.id + ',\'' + r.label + '\',\'' + dtStart + '\',\'' + dtEnd + '\',' + r.total + ',' + r.done + ')">✏️</span></div><div class="estats"><div><div class="eads-label">Entregues</div><div class="evideos">' + r.done + '</div><div class="evideos-sub">de ' + r.total + ' planejados</div></div><div><div class="epct-val" style="color:' + cor + ';">' + r.pct + '%</div><div class="epct-sub">cumprimento</div></div></div><div class="ebar-track"><div class="ebar-fill" style="width:' + Math.min(r.pct, 100) + '%;background:' + cor + ';"></div></div></div>';
     }).join('');
   }
 }
@@ -1182,7 +1182,7 @@ async function loadCopy() {
   document.getElementById('copyKpiDone').textContent = doneGeral;
   document.getElementById('copyKpiPct').textContent = pctGeral + '%';
   document.getElementById('copyKpiPct').style.color = corPerformance(pctGeral);
-  document.getElementById('copyKpiPctFill').style.width = pctGeral + '%';
+  document.getElementById('copyKpiPctFill').style.width = Math.min(pctGeral, 100) + '%';
   document.getElementById('copyKpiPctFill').style.background = corPerformance(pctGeral);
 
   if (results.length === 0) {
@@ -1192,7 +1192,7 @@ async function loadCopy() {
       const cor = corPerformance(r.pct);
       const tc = r.color === "#c9a84c" ? "#000" : "#fff";
       const tagManual = r.temOverride ? '<span style="font-size:9px;color:#c9a84c;border:1px solid #c9a84c;border-radius:4px;padding:1px 5px;margin-left:6px;">manual</span>' : '';
-      return '<div class="ecard"><div class="ehead"><div class="eavatar" style="background:' + r.color + ';color:' + tc + ';">' + r.initials + '</div><div><div class="ename">' + r.label + tagManual + '</div><div class="erole">Copy</div></div><span style="margin-left:auto;cursor:pointer;font-size:14px;" title="Editar manualmente" onclick="abrirModalOverride(\'copy_ads\',' + r.id + ',\'' + r.label + '\',\'' + dtStart + '\',\'' + dtEnd + '\',' + r.total + ',' + r.done + ')">✏️</span></div><div class="estats"><div><div class="eads-label">Entregues</div><div class="evideos">' + r.done + '</div><div class="evideos-sub">de ' + r.total + ' planejados</div></div><div><div class="epct-val" style="color:' + cor + ';">' + r.pct + '%</div><div class="epct-sub">cumprimento</div></div></div><div class="ebar-track"><div class="ebar-fill" style="width:' + r.pct + '%;background:' + cor + ';"></div></div></div>';
+      return '<div class="ecard"><div class="ehead"><div class="eavatar" style="background:' + r.color + ';color:' + tc + ';">' + r.initials + '</div><div><div class="ename">' + r.label + tagManual + '</div><div class="erole">Copy</div></div><span style="margin-left:auto;cursor:pointer;font-size:14px;" title="Editar manualmente" onclick="abrirModalOverride(\'copy_ads\',' + r.id + ',\'' + r.label + '\',\'' + dtStart + '\',\'' + dtEnd + '\',' + r.total + ',' + r.done + ')">✏️</span></div><div class="estats"><div><div class="eads-label">Entregues</div><div class="evideos">' + r.done + '</div><div class="evideos-sub">de ' + r.total + ' planejados</div></div><div><div class="epct-val" style="color:' + cor + ';">' + r.pct + '%</div><div class="epct-sub">cumprimento</div></div></div><div class="ebar-track"><div class="ebar-fill" style="width:' + Math.min(r.pct, 100) + '%;background:' + cor + ';"></div></div></div>';
     }).join('');
   }
 }
@@ -1490,7 +1490,7 @@ async function loadCriativos() {
     document.getElementById('criativosTestados').textContent = testados;
     document.getElementById('criativosValidados').textContent = validados;
     document.getElementById('criativosPct').textContent = pct.toFixed(2) + '%';
-    document.getElementById('criativosPctFill').style.width = pct + '%';
+    document.getElementById('criativosPctFill').style.width = Math.min(pct, 100) + '%';
     document.getElementById('criativosEmTeste').textContent = emTeste;
 
     const imgItems = comData.filter(c => (c.tipo || 'video') === 'imagem');
@@ -1572,7 +1572,7 @@ async function loadCriativos() {
           </div>
         </div>
         <div style="background:rgba(255,255,255,.04);border-radius:6px;overflow:hidden;margin-bottom:12px;">
-          <div style="height:4px;background:${corPct};width:${pctCopy}%;"></div>
+          <div style="height:4px;background:${corPct};width:${Math.min(pctCopy, 100)}%;"></div>
         </div>
         ${linhasVideo ? `<div style="font-size:10px;color:rgba(255,255,255,.65);letter-spacing:.06em;margin-bottom:4px;">VIDEO</div>
         <table style="width:100%;border-collapse:collapse;margin-bottom:12px;">
