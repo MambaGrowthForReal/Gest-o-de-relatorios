@@ -600,7 +600,7 @@ async function loadCS() {
     const reemb = l?.reembolso ?? null;
     const charg = l?.chargeback ?? null;
     const meta = l?.meta ?? 13.00;
-    const pct = (fat && fat > 0 && reemb !== null) ? (reemb / fat) * 100 : null;
+    const pct = (fat && fat > 0 && (reemb !== null || charg !== null)) ? ((Number(reemb || 0) + Number(charg || 0)) / fat) * 100 : null;
     const cor = pct !== null ? (pct <= meta ? '#1D9E75' : '#e74c3c') : 'inherit';
     if (fat) totalFat += Number(fat);
     if (reemb) totalReemb += Number(reemb);
@@ -615,7 +615,7 @@ async function loadCS() {
       <td>${fmtPct(meta)}</td>
     </tr>`);
   }
-  const pctTotal = totalFat > 0 ? (totalReemb / totalFat) * 100 : 0;
+  const pctTotal = totalFat > 0 ? ((totalReemb + totalChar) / totalFat) * 100 : 0;
   linhasHtml.push(`<tr style="font-weight:600;border-top:1px solid rgba(255,255,255,.1);">
     <td>Total</td>
     <td>${fmtBRL(totalFat)}</td>
