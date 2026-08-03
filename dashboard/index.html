@@ -572,7 +572,7 @@ async function confirmarModalOverride() {
   const novoConcluidos = parseInt(document.getElementById('overrideModalConcluidos').value) || 0;
 
   try {
-    await fetch(SUPABASE_URL + "/rest/v1/manual_overrides", {
+    const resp = await fetch(SUPABASE_URL + "/rest/v1/manual_overrides?on_conflict=tela,editor_id,periodo_de,periodo_ate", {
       method: "POST",
       headers: Object.assign({}, SUPABASE_HEADERS, {
         "Content-Type": "application/json",
@@ -588,6 +588,12 @@ async function confirmarModalOverride() {
         periodo_ate: dtEnd
       }])
     });
+    if (!resp.ok) {
+      const erro = await resp.text();
+      console.error("Erro ao salvar override:", resp.status, erro);
+      alert("Erro ao salvar (" + resp.status + "). Detalhe no console.");
+      return;
+    }
   } catch (e) {
     console.error("Erro ao salvar override:", e);
     alert("Erro ao salvar. Tenta de novo.");
